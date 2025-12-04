@@ -1,0 +1,182 @@
+# OpenAI Model Definitions
+author: openai
+website: https://openai.com
+documentation: https://platform.openai.com/docs
+
+models:
+  # ============================================================================
+  # GPT-4.1 Generation
+  # ============================================================================
+  gpt-4.1:
+    family: gpt
+    generation: 4.1
+    tier: pro
+    release_date: "2025-04-14"
+    context:
+      input: 1047576
+      output: 32768
+    capabilities:
+      vision: true
+      tool_use: true
+      parallel_tools: true
+      system_messages: true
+      json_mode: true
+      structured_output: true
+      web_search: true
+    reasoning:
+      style: none
+
+  gpt-4.1-mini:
+    family: gpt
+    generation: 4.1
+    tier: mini
+    release_date: "2025-04-14"
+    context:
+      input: 1047576
+      output: 32768
+    capabilities:
+      vision: true
+      tool_use: true
+      parallel_tools: true
+      system_messages: true
+      json_mode: true
+      structured_output: true
+    reasoning:
+      style: none
+
+  gpt-4.1-nano:
+    family: gpt
+    generation: 4.1
+    tier: nano
+    release_date: "2025-04-14"
+    context:
+      input: 1047576
+      output: 32768
+    capabilities:
+      vision: true
+      tool_use: true
+      parallel_tools: true
+      system_messages: true
+      json_mode: true
+      structured_output: true
+    reasoning:
+      style: none
+
+  # ============================================================================
+  # GPT-4o Generation
+  # ============================================================================
+  gpt-4o:
+    family: gpt
+    generation: 4o
+    tier: pro
+    release_date: "2024-05-13"
+    context:
+      input: 128000
+      output: 16384
+    capabilities:
+      vision: true
+      audio_input: true
+      tool_use: true
+      parallel_tools: true
+      system_messages: true
+      json_mode: true
+      structured_output: true
+    reasoning:
+      style: none
+
+  gpt-4o-mini:
+    family: gpt
+    generation: 4o
+    tier: mini
+    release_date: "2024-07-18"
+    context:
+      input: 128000
+      output: 16384
+    capabilities:
+      vision: true
+      tool_use: true
+      parallel_tools: true
+      system_messages: true
+      json_mode: true
+      structured_output: true
+    reasoning:
+      style: none
+
+  # ============================================================================
+  # O-Series (Reasoning Models)
+  # ============================================================================
+  o3:
+    family: o
+    generation: 3
+    tier: pro
+    release_date: "2025-04-16"
+    context:
+      input: 200000
+      output: 100000
+    capabilities:
+      vision: true
+      tool_use: true
+      system_messages: true
+      json_mode: true
+      structured_output: true
+      reasoning: true
+    reasoning:
+      style: effort
+      values: [low, medium, high]
+      default: medium
+
+  o3-mini:
+    family: o
+    generation: 3
+    tier: mini
+    release_date: "2025-01-31"
+    context:
+      input: 200000
+      output: 100000
+    capabilities:
+      tool_use: true
+      system_messages: true
+      json_mode: true
+      structured_output: true
+      reasoning: true
+    reasoning:
+      style: effort
+      values: [low, medium, high]
+      default: low
+
+  o4-mini:
+    family: o
+    generation: 4
+    tier: mini
+    release_date: "2025-04-16"
+    context:
+      input: 200000
+      output: 100000
+    capabilities:
+      vision: true
+      tool_use: true
+      system_messages: true
+      json_mode: true
+      structured_output: true
+      reasoning: true
+    reasoning:
+      style: effort
+      values: [low, medium, high]
+      default: low
+
+  o1:
+    family: o
+    generation: 1
+    tier: pro
+    release_date: "2024-12-17"
+    context:
+      input: 200000
+      output: 100000
+    capabilities:
+      vision: true
+      tool_use: true
+      reasoning: true
+    reasoning:
+      style: effort
+      values: [low, medium, high]
+      default: medium

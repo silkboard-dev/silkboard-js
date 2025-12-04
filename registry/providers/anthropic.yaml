@@ -1,0 +1,63 @@
+# Anthropic Direct Provider
+provider: anthropic
+type: direct
+sdk: "@ai-sdk/anthropic"
+env_key: ANTHROPIC_API_KEY
+base_url: https://api.anthropic.com
+
+models:
+  claude-opus-4:
+    model_id: claude-opus-4-20250514
+    pricing:
+      input: 15.00
+      output: 75.00
+      cached_input: 1.50
+      cache_write: 18.75
+
+  claude-sonnet-4:
+    model_id: claude-sonnet-4-20250514
+    pricing:
+      input: 3.00
+      output: 15.00
+      cached_input: 0.30
+      cache_write: 3.75
+
+  claude-opus-4.5:
+    model_id: claude-opus-4-5-20251101
+    pricing:
+      input: 15.00
+      output: 75.00
+      cached_input: 1.50
+      cache_write: 18.75
+
+  claude-sonnet-4.5:
+    model_id: claude-sonnet-4-5-20250929
+    pricing:
+      input: 3.00
+      output: 15.00
+      cached_input: 0.30
+      cache_write: 3.75
+
+  claude-haiku-4.5:
+    model_id: claude-haiku-4-5-20251001
+    pricing:
+      input: 1.00
+      output: 5.00
+      cached_input: 0.10
+      cache_write: 1.25
+
+  claude-sonnet-3.5:
+    model_id: claude-3-5-sonnet-20241022
+    pricing:
+      input: 3.00
+      output: 15.00
+      cached_input: 0.30
+      cache_write: 3.75
+
+  claude-haiku-3.5:
+    model_id: claude-3-5-haiku-20241022
+    pricing:
+      input: 0.80
+      output: 4.00
+      cached_input: 0.08
+      cache_write: 1.00

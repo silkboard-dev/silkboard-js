@@ -32,6 +32,12 @@ coverage/
 # Pricing cache (contains fetched data)
 .pricing-cache.json
 
+# Test coverage
+coverage/
+
+# Vitest
+.vitest/
+
 # User config files (use .example files as templates)
 config/models.yaml
 config/roles.yaml

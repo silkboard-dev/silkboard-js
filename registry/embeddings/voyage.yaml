@@ -1,0 +1,55 @@
+# Voyage AI Embedding Models
+provider: voyage
+type: direct
+sdk: voyageai  # Native SDK, not AI SDK
+env_key: VOYAGE_API_KEY
+
+models:
+  voyage-3-large:
+    model_id: voyage-3-large
+    dimensions: 1024
+    max_input: 32000
+    pricing:
+      input: 0.18
+
+  voyage-3:
+    model_id: voyage-3
+    dimensions: 1024
+    max_input: 32000
+    pricing:
+      input: 0.06
+
+  voyage-3-lite:
+    model_id: voyage-3-lite
+    dimensions: 512
+    max_input: 32000
+    pricing:
+      input: 0.02
+
+  voyage-code-3:
+    model_id: voyage-code-3
+    dimensions: 1024
+    max_input: 32000
+    pricing:
+      input: 0.18
+
+  voyage-finance-2:
+    model_id: voyage-finance-2
+    dimensions: 1024
+    max_input: 32000
+    pricing:
+      input: 0.12
+
+  voyage-law-2:
+    model_id: voyage-law-2
+    dimensions: 1024
+    max_input: 32000
+    pricing:
+      input: 0.12
+
+  voyage-multilingual-2:
+    model_id: voyage-multilingual-2
+    dimensions: 1024
+    max_input: 32000
+    pricing:
+      input: 0.12

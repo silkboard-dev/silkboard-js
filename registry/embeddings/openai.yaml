@@ -1,0 +1,27 @@
+# OpenAI Embedding Models
+provider: openai
+type: direct
+sdk: "@ai-sdk/openai"
+env_key: OPENAI_API_KEY
+
+models:
+  text-embedding-3-large:
+    model_id: text-embedding-3-large
+    dimensions: 3072
+    max_input: 8191
+    pricing:
+      input: 0.13
+
+  text-embedding-3-small:
+    model_id: text-embedding-3-small
+    dimensions: 1536
+    max_input: 8191
+    pricing:
+      input: 0.02
+
+  text-embedding-ada-002:
+    model_id: text-embedding-ada-002
+    dimensions: 1536
+    max_input: 8191
+    pricing:
+      input: 0.10

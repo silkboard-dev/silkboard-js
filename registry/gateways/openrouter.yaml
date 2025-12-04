@@ -1,0 +1,183 @@
+# OpenRouter Gateway
+# Aggregates models from multiple authors with unified API
+gateway: openrouter
+type: gateway
+sdk: "@ai-sdk/openai-compatible"
+sdk_options:
+  name: openrouter
+  baseURL: https://openrouter.ai/api/v1
+env_key: OPENROUTER_API_KEY
+
+# OpenRouter normalizes reasoning params
+reasoning_normalization:
+  anthropic:
+    # OpenRouter caps Anthropic extended thinking at 32K
+    max_tokens_override: 32000
+    parameter: max_tokens
+  openai:
+    parameter: reasoning_effort
+  google:
+    parameter: thinking_budget
+
+models:
+  # ============================================================================
+  # Anthropic Models via OpenRouter
+  # ============================================================================
+  anthropic/claude-opus-4:
+    author: anthropic
+    model: claude-opus-4
+    model_id: anthropic/claude-opus-4-20250514
+    pricing:
+      input: 15.00
+      output: 75.00
+
+  anthropic/claude-sonnet-4:
+    author: anthropic
+    model: claude-sonnet-4
+    model_id: anthropic/claude-sonnet-4-20250514
+    pricing:
+      input: 3.00
+      output: 15.00
+
+  anthropic/claude-sonnet-4.5:
+    author: anthropic
+    model: claude-sonnet-4.5
+    model_id: anthropic/claude-sonnet-4-5-20250929
+    pricing:
+      input: 3.00
+      output: 15.00
+
+  anthropic/claude-haiku-4.5:
+    author: anthropic
+    model: claude-haiku-4.5
+    model_id: anthropic/claude-haiku-4-5-20251001
+    pricing:
+      input: 1.00
+      output: 5.00
+
+  # ============================================================================
+  # OpenAI Models via OpenRouter
+  # ============================================================================
+  openai/gpt-4.1:
+    author: openai
+    model: gpt-4.1
+    model_id: openai/gpt-4.1
+    pricing:
+      input: 2.00
+      output: 8.00
+
+  openai/gpt-4o:
+    author: openai
+    model: gpt-4o
+    model_id: openai/gpt-4o
+    pricing:
+      input: 2.50
+      output: 10.00
+
+  openai/o3:
+    author: openai
+    model: o3
+    model_id: openai/o3
+    pricing:
+      input: 2.00
+      output: 8.00
+
+  openai/o3-mini:
+    author: openai
+    model: o3-mini
+    model_id: openai/o3-mini
+    pricing:
+      input: 1.10
+      output: 4.40
+
+  # ============================================================================
+  # Google Models via OpenRouter
+  # ============================================================================
+  google/gemini-2.5-pro:
+    author: google
+    model: gemini-2.5-pro
+    model_id: google/gemini-2.5-pro-preview
+    pricing:
+      input: 1.25
+      output: 10.00
+
+  google/gemini-2.5-flash:
+    author: google
+    model: gemini-2.5-flash
+    model_id: google/gemini-2.5-flash-preview
+    pricing:
+      input: 0.15
+      output: 0.60
+
+  google/gemini-2.0-flash:
+    author: google
+    model: gemini-2.0-flash
+    model_id: google/gemini-2.0-flash-001
+    pricing:
+      input: 0.10
+      output: 0.40
+
+  # ============================================================================
+  # Meta Models via OpenRouter
+  # ============================================================================
+  meta-llama/llama-3.3-70b:
+    author: meta
+    model: llama-3.3-70b
+    model_id: meta-llama/llama-3.3-70b-instruct
+    pricing:
+      input: 0.12
+      output: 0.30
+
+  meta-llama/llama-4-scout:
+    author: meta
+    model: llama-4-scout
+    model_id: meta-llama/llama-4-scout-17b-16e-instruct
+    pricing:
+      input: 0.11
+      output: 0.34
+
+  meta-llama/llama-4-maverick:
+    author: meta
+    model: llama-4-maverick
+    model_id: meta-llama/llama-4-maverick-17b-128e-instruct
+    pricing:
+      input: 0.20
+      output: 0.60
+
+  # ============================================================================
+  # DeepSeek Models via OpenRouter
+  # ============================================================================
+  deepseek/deepseek-r1:
+    author: deepseek
+    model: deepseek-r1
+    model_id: deepseek/deepseek-r1
+    pricing:
+      input: 0.55
+      output: 2.19
+
+  deepseek/deepseek-chat-v3:
+    author: deepseek
+    model: deepseek-chat-v3
+    model_id: deepseek/deepseek-chat-v3-0324
+    pricing:
+      input: 0.27
+      output: 1.10
+
+  # ============================================================================
+  # Qwen Models via OpenRouter
+  # ============================================================================
+  qwen/qwq-32b:
+    author: qwen
+    model: qwq-32b
+    model_id: qwen/qwq-32b
+    pricing:
+      input: 0.12
+      output: 0.18
+
+  qwen/qwen-2.5-72b:
+    author: qwen
+    model: qwen-2.5-72b
+    model_id: qwen/qwen-2.5-72b-instruct
+    pricing:
+      input: 0.12
+      output: 0.30

@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Gateway Schema",
+  "description": "Defines gateway/aggregator providers that serve multiple authors",
+  "type": "object",
+  "required": ["gateway", "type", "sdk", "env_key", "models"],
+  "properties": {
+    "gateway": {
+      "type": "string",
+      "description": "Gateway identifier"
+    },
+    "type": {
+      "type": "string",
+      "const": "gateway",
+      "description": "Provider type (always 'gateway' for gateways)"
+    },
+    "sdk": {
+      "type": "string",
+      "description": "AI SDK package name"
+    },
+    "sdk_options": {
+      "type": "object",
+      "description": "SDK initialization options",
+      "properties": {
+        "name": { "type": "string" },
+        "baseURL": { "type": "string", "format": "uri" }
+      }
+    },
+    "env_key": {
+      "type": "string",
+      "description": "Environment variable for API key"
+    },
+    "env_keys": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Multiple environment variables (e.g., AWS credentials)"
+    },
+    "regions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Supported regions for regional gateways"
+    },
+    "reasoning_normalization": {
+      "type": "object",
+      "description": "How to normalize reasoning params for different authors",
+      "additionalProperties": {
+        "$ref": "#/definitions/ReasoningNormalization"
+      }
+    },
+    "models": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/GatewayModel"
+      }
+    }
+  },
+  "definitions": {
+    "GatewayModel": {
+      "type": "object",
+      "required": ["author", "model", "model_id"],
+      "properties": {
+        "author": {
+          "type": "string",
+          "description": "Original model author"
+        },
+        "model": {
+          "type": "string",
+          "description": "Model name (references author's model definition)"
+        },
+        "model_id": {
+          "type": "string",
+          "description": "Gateway-specific model ID"
+        },
+        "pricing": {
+          "$ref": "#/definitions/Pricing"
+        },
+        "regional_pricing": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Pricing"
+          },
+          "description": "Region-specific pricing overrides"
+        },
+        "context_override": {
+          "type": "object",
+          "properties": {
+            "input": { "type": "integer" },
+            "output": { "type": "integer" }
+          },
+          "description": "Override context limits for this gateway"
+        }
+      }
+    },
+    "Pricing": {
+      "type": "object",
+      "properties": {
+        "input": { "type": "number" },
+        "output": { "type": "number" },
+        "cached_input": { "type": "number" },
+        "cache_write": { "type": "number" },
+        "reasoning": { "type": "number" }
+      }
+    },
+    "ReasoningNormalization": {
+      "type": "object",
+      "properties": {
+        "max_tokens_override": {
+          "type": "integer",
+          "description": "Cap reasoning tokens for this author"
+        },
+        "parameter": {
+          "type": "string",
+          "description": "Parameter name to use (e.g., max_tokens, reasoning_effort)"
+        }
+      }
+    }
+  }
+}

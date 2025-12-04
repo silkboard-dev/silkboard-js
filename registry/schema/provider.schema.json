@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Provider Schema",
+  "description": "Defines direct API provider access and pricing",
+  "type": "object",
+  "required": ["provider", "type", "sdk", "env_key", "models"],
+  "properties": {
+    "provider": {
+      "type": "string",
+      "description": "Provider identifier"
+    },
+    "type": {
+      "type": "string",
+      "const": "direct",
+      "description": "Provider type (always 'direct' for providers)"
+    },
+    "sdk": {
+      "type": "string",
+      "description": "AI SDK package name"
+    },
+    "env_key": {
+      "type": "string",
+      "description": "Environment variable for API key"
+    },
+    "base_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional base URL override"
+    },
+    "models": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ProviderModel"
+      }
+    }
+  },
+  "definitions": {
+    "ProviderModel": {
+      "type": "object",
+      "required": ["model_id", "pricing"],
+      "properties": {
+        "model_id": {
+          "type": "string",
+          "description": "Actual model ID to send to API"
+        },
+        "pricing": {
+          "$ref": "#/definitions/Pricing"
+        },
+        "rate_limits": {
+          "$ref": "#/definitions/RateLimits"
+        }
+      }
+    },
+    "Pricing": {
+      "type": "object",
+      "properties": {
+        "input": { "type": "number", "description": "Cost per 1M input tokens" },
+        "output": { "type": "number", "description": "Cost per 1M output tokens" },
+        "cached_input": { "type": "number", "description": "Cost per 1M cached input tokens" },
+        "cache_write": { "type": "number", "description": "Cost per 1M cache write tokens" },
+        "reasoning": { "type": "number", "description": "Cost per 1M reasoning tokens" },
+        "per_request": { "type": "number", "description": "Fixed cost per request" }
+      }
+    },
+    "RateLimits": {
+      "type": "object",
+      "properties": {
+        "rpm": { "type": "integer", "description": "Requests per minute" },
+        "tpm": { "type": "integer", "description": "Tokens per minute" },
+        "rpd": { "type": "integer", "description": "Requests per day" }
+      }
+    }
+  }
+}

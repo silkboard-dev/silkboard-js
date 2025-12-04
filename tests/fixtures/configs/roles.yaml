@@ -1,0 +1,34 @@
+# Test fixture: roles.yaml
+version: "1.0"
+
+roles:
+  query:
+    model: gpt-4o
+    overrides:
+      parameters:
+        temperature: 0.3
+
+  answer:
+    fast:
+      model: gemini-flash
+    balanced:
+      model: claude-sonnet
+      overrides:
+        reasoning:
+          budget: 8000
+    accurate:
+      model: claude-sonnet
+      overrides:
+        reasoning:
+          budget: 16000
+
+  embedding:
+    primary: text-embedding-3-large
+
+  reranker:
+    primary: rerank-2
+
+environments:
+  test:
+    answer.accurate:
+      model: gpt-4o

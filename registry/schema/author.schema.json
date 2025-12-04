@@ -1,0 +1,122 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Author Schema",
+  "description": "Defines model capabilities by author/creator",
+  "type": "object",
+  "required": ["author", "models"],
+  "properties": {
+    "author": {
+      "type": "string",
+      "description": "Author identifier (e.g., anthropic, openai, meta)"
+    },
+    "website": {
+      "type": "string",
+      "format": "uri"
+    },
+    "documentation": {
+      "type": "string",
+      "format": "uri"
+    },
+    "models": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ModelDefinition"
+      }
+    }
+  },
+  "definitions": {
+    "ModelDefinition": {
+      "type": "object",
+      "required": ["context", "capabilities"],
+      "properties": {
+        "family": {
+          "type": "string",
+          "description": "Model family (claude, gpt, llama)"
+        },
+        "generation": {
+          "type": ["string", "number"],
+          "description": "Model generation (4, 3.5, etc.)"
+        },
+        "tier": {
+          "type": "string",
+          "enum": ["opus", "sonnet", "haiku", "pro", "flash", "mini", "nano", "turbo"],
+          "description": "Performance tier within family"
+        },
+        "release_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "deprecation_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "context": {
+          "type": "object",
+          "required": ["input", "output"],
+          "properties": {
+            "input": { "type": "integer", "description": "Max input tokens" },
+            "output": { "type": "integer", "description": "Max output tokens" }
+          }
+        },
+        "capabilities": {
+          "$ref": "#/definitions/Capabilities"
+        },
+        "reasoning": {
+          "$ref": "#/definitions/ReasoningConfig"
+        }
+      }
+    },
+    "Capabilities": {
+      "type": "object",
+      "properties": {
+        "vision": { "type": "boolean" },
+        "audio_input": { "type": "boolean" },
+        "audio_output": { "type": "boolean" },
+        "video_input": { "type": "boolean" },
+        "tool_use": { "type": "boolean" },
+        "parallel_tools": { "type": "boolean" },
+        "system_messages": { "type": "boolean" },
+        "assistant_prefill": { "type": "boolean" },
+        "prompt_caching": { "type": "boolean" },
+        "pdf_input": { "type": "boolean" },
+        "computer_use": { "type": "boolean" },
+        "reasoning": { "type": "boolean" },
+        "json_mode": { "type": "boolean" },
+        "structured_output": { "type": "boolean" },
+        "web_search": { "type": "boolean" }
+      }
+    },
+    "ReasoningConfig": {
+      "type": "object",
+      "required": ["style"],
+      "properties": {
+        "style": {
+          "type": "string",
+          "enum": ["none", "effort", "budget", "level"],
+          "description": "Reasoning configuration style"
+        },
+        "values": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "For effort/level style: allowed values"
+        },
+        "min_tokens": {
+          "type": "integer",
+          "description": "For budget style: minimum token budget"
+        },
+        "max_tokens": {
+          "type": "integer",
+          "description": "For budget style: maximum token budget"
+        },
+        "default_tokens": {
+          "type": "integer",
+          "description": "For budget style: default token budget"
+        },
+        "default": {
+          "type": "string",
+          "description": "For effort/level style: default value"
+        }
+      }
+    }
+  }
+}
