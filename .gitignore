@@ -49,3 +49,9 @@ pnpm-lock.yaml
 yarn.lock
 model_prices_and_context_window.json
 .claude/agents/web-research-specialist.md
+
+# Inspiration/reference code (not our code)
+inspirations/
+
+# Decision log (local only)
+DECISIONS.md

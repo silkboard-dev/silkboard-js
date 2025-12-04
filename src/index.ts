@@ -1,14 +1,55 @@
-// Main service
+/**
+ * @fileoverview Silkboard SDK - Unified LLM router built on Vercel AI SDK.
+ * 
+ * Silkboard provides a unified interface to access 50+ models across 9+ providers
+ * with reasoning normalization, cost tracking, and YAML-based configuration.
+ * 
+ * @example
+ * ```typescript
+ * import { Silkboard } from 'silkboard';
+ * 
+ * const silk = new Silkboard({
+ *   modelsConfig: './config/models.yaml',
+ *   rolesConfig: './config/roles.yaml',
+ * });
+ * 
+ * const result = await silk.streamText({
+ *   role: 'answer',
+ *   variant: 'balanced',
+ *   messages: [{ role: 'user', content: 'Hello' }],
+ * });
+ * ```
+ * @packageDocumentation
+ */
+
+/**
+ * Main Silkboard service class and factory function.
+ * @see {@link Silkboard} for the main service class
+ * @see {@link createSilkboard} for factory function
+ */
 export { Silkboard, createSilkboard } from './service';
 
-// Configuration
+/**
+ * Configuration loading utilities for YAML-based model and role configs.
+ * @see {@link ConfigLoader} for loading and validating configurations
+ */
 export { ConfigLoader, createConfigLoader } from './loaders';
 
-// Provider registry
+/**
+ * Provider registry for model instance management and caching.
+ * @see {@link Registry} for model resolution and caching
+ */
 export { Registry, createRegistry } from './providers/registry';
+
+/**
+ * Provider factory functions for lazy initialization.
+ */
 export { getProvider, isProviderAvailable, clearProviderCache } from './providers/factory';
 
-// Adapters
+/**
+ * Native SDK adapters for providers not fully supported by AI SDK.
+ * Voyage AI and Cohere have native adapters for embedding and reranking.
+ */
 export {
   voyageEmbed,
   voyageRerank,
@@ -17,7 +58,16 @@ export {
   isCohereAvailable,
 } from './providers/adapters';
 
-// Reasoning builders
+/**
+ * Reasoning configuration builders for provider-specific thinking/reasoning APIs.
+ * These normalize the different reasoning implementations across providers.
+ * 
+ * @example
+ * ```typescript
+ * // Build Anthropic thinking config
+ * const config = buildAnthropicProviderOptions(modelConfig, { budget: 10000 });
+ * ```
+ */
 export {
   buildReasoningConfig,
   buildOpenAIProviderOptions,
@@ -26,7 +76,11 @@ export {
   buildOpenRouterExtraBody,
 } from './reasoning';
 
-// Caching
+/**
+ * Caching utilities including memory cache and Anthropic prompt caching.
+ * @see {@link createCacheMiddleware} for AI SDK middleware
+ * @see {@link MemoryCacheStore} for in-memory cache implementation
+ */
 export {
   createCacheMiddleware,
   MemoryCacheStore,
@@ -35,11 +89,34 @@ export {
   type CacheMiddlewareOptions,
 } from './caching';
 
-// Cost tracking
+/**
+ * Cost tracking for monitoring LLM usage and spending.
+ * @see {@link CostTracker} for usage tracking and cost calculation
+ */
 export { CostTracker, createCostTracker } from './cost/tracker';
 
-// Error handling
+/**
+ * Custom error classes with error codes for better error handling.
+ * @see {@link SilkboardError} for the base error class
+ * @see {@link SilkboardErrorCode} for available error codes
+ */
 export { SilkboardError, SilkboardErrorCode } from './errors';
+
+/**
+ * Telemetry interfaces for logging and metrics.
+ * @see {@link SilkboardLogger} for pluggable logging
+ * @see {@link SilkboardMetrics} for pluggable metrics
+ */
+export {
+  type SilkboardLogger,
+  consoleLogger,
+  noopLogger,
+  createPrefixedLogger,
+  type SilkboardMetrics,
+  noopMetrics,
+  consoleMetrics,
+  MetricNames,
+} from './telemetry';
 
 // Types
 export type {

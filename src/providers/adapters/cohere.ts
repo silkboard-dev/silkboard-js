@@ -1,22 +1,16 @@
 import { rerank } from 'ai';
 import type { ModelConfig, RerankResult } from '../../types';
 
-let cohereProvider: ReturnType<typeof createCohereProvider> | null = null;
+let cohereProvider: any | null = null;
 
-function createCohereProvider() {
-  const { createCohere } = require('@ai-sdk/cohere');
-  const apiKey = process.env.COHERE_API_KEY;
-  
-  if (!apiKey) {
-    throw new Error('COHERE_API_KEY not configured');
-  }
-
-  return createCohere({ apiKey });
-}
-
-function getCohereProvider() {
+async function getCohereProvider() {
   if (!cohereProvider) {
-    cohereProvider = createCohereProvider();
+    const apiKey = process.env.COHERE_API_KEY;
+    if (!apiKey) {
+      throw new Error('COHERE_API_KEY not configured');
+    }
+    const { createCohere } = await import('@ai-sdk/cohere');
+    cohereProvider = createCohere({ apiKey });
   }
   return cohereProvider;
 }
@@ -27,7 +21,7 @@ export async function cohereRerank(
   config: ModelConfig,
   topN?: number
 ): Promise<RerankResult[]> {
-  const provider = getCohereProvider();
+  const provider = await getCohereProvider();
 
   const { ranking } = await rerank({
     model: provider.reranking(config.model_id),

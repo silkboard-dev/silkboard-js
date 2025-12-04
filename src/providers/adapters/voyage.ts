@@ -1,45 +1,24 @@
 import type { ModelConfig, RerankResult } from '../../types';
 
-let voyageClient: VoyageAIClient | null = null;
+let voyageClient: any = null;
 
-interface VoyageAIClient {
-  embed(options: {
-    input: string[];
-    model: string;
-    inputType?: 'document' | 'query';
-    truncation?: boolean;
-  }): Promise<{ data: Array<{ embedding: number[] }> }>;
-  
-  rerank(options: {
-    query: string;
-    documents: string[];
-    model: string;
-    topK?: number;
-    truncation?: boolean;
-  }): Promise<{
-    data: Array<{ index: number; relevanceScore: number }> | null;
-  }>;
-}
-
-function getVoyageClient(): VoyageAIClient {
+async function getVoyageClient(): Promise<any> {
   if (!voyageClient) {
     const apiKey = process.env.VOYAGE_API_KEY;
     if (!apiKey) {
       throw new Error('VOYAGE_API_KEY not configured');
     }
-
-    // Dynamic import to avoid loading if not needed
-    const { VoyageAIClient: Client } = require('voyageai');
-    voyageClient = new Client({ apiKey });
+    const { VoyageAIClient } = await import('voyageai');
+    voyageClient = new VoyageAIClient({ apiKey });
   }
-  return voyageClient!;
+  return voyageClient;
 }
 
 export async function voyageEmbed(
   texts: string | string[],
   config: ModelConfig
 ): Promise<number[][]> {
-  const client = getVoyageClient();
+  const client = await getVoyageClient();
   const input = Array.isArray(texts) ? texts : [texts];
 
   const response = await client.embed({
@@ -49,7 +28,7 @@ export async function voyageEmbed(
     truncation: true,
   });
 
-  return response.data.map((d) => d.embedding);
+  return response.data.map((d: { embedding: number[] }) => d.embedding);
 }
 
 export async function voyageRerank(
@@ -58,7 +37,7 @@ export async function voyageRerank(
   config: ModelConfig,
   topN?: number
 ): Promise<RerankResult[]> {
-  const client = getVoyageClient();
+  const client = await getVoyageClient();
 
   const response = await client.rerank({
     query,
@@ -72,11 +51,12 @@ export async function voyageRerank(
     return [];
   }
 
+  type RerankResponseItem = { index: number; relevanceScore: number };
   return response.data
-    .filter((r): r is { index: number; relevanceScore: number } => 
+    .filter((r: RerankResponseItem): r is RerankResponseItem => 
       r.index !== undefined && r.relevanceScore !== undefined
     )
-    .map((r) => ({
+    .map((r: RerankResponseItem) => ({
       index: r.index,
       relevanceScore: r.relevanceScore,
       document: documents[r.index],

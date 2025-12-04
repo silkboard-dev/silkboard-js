@@ -113,8 +113,23 @@ function hashParams(params: unknown): string {
   return Math.abs(hash).toString(36);
 }
 
+export interface MemoryCacheOptions {
+  maxSize?: number;
+  defaultTtlSeconds?: number;
+}
+
+/**
+ * In-memory cache with LRU eviction and TTL support.
+ */
 export class MemoryCacheStore implements CacheStore {
   private cache = new Map<string, { value: string; expiresAt: number }>();
+  private readonly maxSize: number;
+  private readonly defaultTtlSeconds: number;
+
+  constructor(options: MemoryCacheOptions = {}) {
+    this.maxSize = options.maxSize ?? 1000;
+    this.defaultTtlSeconds = options.defaultTtlSeconds ?? 3600;
+  }
 
   async get(key: string): Promise<string | null> {
     const entry = this.cache.get(key);
@@ -125,11 +140,25 @@ export class MemoryCacheStore implements CacheStore {
       return null;
     }
     
+    // Move to end for LRU (most recently used)
+    this.cache.delete(key);
+    this.cache.set(key, entry);
+    
     return entry.value;
   }
 
   async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
-    const expiresAt = Date.now() + (ttlSeconds ?? 3600) * 1000;
+    // Evict oldest entries if at capacity (LRU eviction)
+    while (this.cache.size >= this.maxSize) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey) {
+        this.cache.delete(oldestKey);
+      } else {
+        break;
+      }
+    }
+
+    const expiresAt = Date.now() + (ttlSeconds ?? this.defaultTtlSeconds) * 1000;
     this.cache.set(key, { value, expiresAt });
   }
 
@@ -143,5 +172,20 @@ export class MemoryCacheStore implements CacheStore {
 
   size(): number {
     return this.cache.size;
+  }
+
+  /**
+   * Remove expired entries from the cache.
+   */
+  prune(): number {
+    const now = Date.now();
+    let pruned = 0;
+    for (const [key, entry] of this.cache) {
+      if (now > entry.expiresAt) {
+        this.cache.delete(key);
+        pruned++;
+      }
+    }
+    return pruned;
   }
 }
