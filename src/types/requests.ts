@@ -110,11 +110,102 @@ export interface UsageEvent extends Omit<UsageRecord, 'timestamp'> {
   timestamp: Date;
 }
 
+/** Token usage information */
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  cachedTokens?: number;
+  reasoningTokens?: number;
+}
+
+/** Event emitted when a request starts */
+export interface StartEvent {
+  requestId: string;
+  model: string;
+  provider: string;
+  role?: string;
+  variant?: string;
+  timestamp: Date;
+}
+
+/** Event emitted when a request completes successfully */
+export interface CompleteEvent {
+  requestId: string;
+  model: string;
+  provider: string;
+  role?: string;
+  variant?: string;
+  latencyMs: number;
+  usage: TokenUsage;
+  timestamp: Date;
+}
+
+/** Event emitted when a request fails */
+export interface ErrorEvent {
+  requestId: string;
+  model: string;
+  provider: string;
+  error: Error;
+  willRetry: boolean;
+  retryAttempt?: number;
+  timestamp: Date;
+}
+
+/** Event emitted when a retry is attempted */
+export interface RetryEvent {
+  requestId: string;
+  model: string;
+  attempt: number;
+  maxRetries: number;
+  error: Error;
+  delayMs: number;
+  timestamp: Date;
+}
+
+/** Event emitted when falling back to another model */
+export interface FallbackEvent {
+  requestId: string;
+  from: string;
+  to: string;
+  reason: string;
+  timestamp: Date;
+}
+
+/** Event emitted on cache hit */
+export interface CacheHitEvent {
+  requestId: string;
+  model: string;
+  cacheKey: string;
+  timestamp: Date;
+}
+
+/** Event emitted on cache miss */
+export interface CacheMissEvent {
+  requestId: string;
+  model: string;
+  cacheKey: string;
+  timestamp: Date;
+}
+
 /** Event types emitted by Silkboard */
-export type SilkboardEvent = {
+export interface SilkboardEvent {
+  /** Emitted after request completes with usage data */
   usage: UsageEvent;
-  error: { model: string; error: Error };
-};
+  /** Emitted when a request starts */
+  start: StartEvent;
+  /** Emitted when a request completes successfully */
+  complete: CompleteEvent;
+  /** Emitted when a request fails */
+  error: ErrorEvent;
+  /** Emitted when a retry is attempted */
+  retry: RetryEvent;
+  /** Emitted when falling back to another model */
+  fallback: FallbackEvent;
+  /** Emitted on cache hit */
+  cacheHit: CacheHitEvent;
+  /** Emitted on cache miss */
+  cacheMiss: CacheMissEvent;
+}
 
 /** Event handler type */
 export type SilkboardEventHandler<K extends keyof SilkboardEvent> = (

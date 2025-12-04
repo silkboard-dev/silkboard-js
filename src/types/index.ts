@@ -54,7 +54,16 @@ export type {
   ResolvedEmbeddingModel,
   UsageRecord,
   UsageSummary,
+  // Event types
+  TokenUsage,
   UsageEvent,
+  StartEvent,
+  CompleteEvent,
+  ErrorEvent,
+  RetryEvent,
+  FallbackEvent,
+  CacheHitEvent,
+  CacheMissEvent,
   SilkboardEvent,
   SilkboardEventHandler,
 } from './requests';

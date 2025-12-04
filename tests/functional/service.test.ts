@@ -83,10 +83,12 @@ describe('CostTracker', () => {
     expect(summary.totalInputTokens).toBe(0);
   });
 
-  it('should emit usage events', async () => {
-    const tracker = new CostTracker(modelsConfig.models);
+  it('should emit usage events when event emitter is provided', async () => {
+    const { SilkboardEventEmitter } = await import('../../src/events');
+    const emitter = new SilkboardEventEmitter();
+    const tracker = new CostTracker(modelsConfig.models, undefined, emitter);
     const events: unknown[] = [];
-    tracker.on('usage', (event) => events.push(event));
+    emitter.on('usage', (event) => events.push(event));
 
     await tracker.track({
       model: 'gpt-4o',

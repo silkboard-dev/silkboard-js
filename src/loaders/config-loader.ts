@@ -15,7 +15,8 @@ import { SilkboardError } from '../errors';
 import modelsSchema from '../../config/models.schema.json';
 import rolesSchema from '../../config/roles.schema.json';
 
-const ajv = new Ajv({ allErrors: true });
+// Disable strict format validation since we don't have ajv-formats installed
+const ajv = new Ajv({ allErrors: true, strict: false });
 
 const validateModels = ajv.compile(modelsSchema);
 const validateRoles = ajv.compile(rolesSchema);
@@ -37,7 +38,7 @@ export class ConfigLoader {
         throw SilkboardError.configNotFound(configPathOrObject);
       }
       const content = readFileSync(configPathOrObject, 'utf-8');
-      config = parseYaml(content) as ModelsConfigFile;
+      config = this.parseConfigFile(configPathOrObject, content) as ModelsConfigFile;
     } else {
       config = configPathOrObject;
     }
@@ -61,7 +62,7 @@ export class ConfigLoader {
         throw SilkboardError.configNotFound(configPathOrObject);
       }
       const content = readFileSync(configPathOrObject, 'utf-8');
-      config = parseYaml(content) as RolesConfigFile;
+      config = this.parseConfigFile(configPathOrObject, content) as RolesConfigFile;
     } else {
       config = configPathOrObject;
     }
@@ -176,6 +177,27 @@ export class ConfigLoader {
 
   private isRoleWithVariants(config: RoleConfig): config is RoleWithVariants {
     return !this.isSimpleRole(config) && !this.isRoleWithFallback(config);
+  }
+
+  /**
+   * Parse config file content based on file extension.
+   * Supports YAML (.yaml, .yml) and JSON (.json) files.
+   */
+  private parseConfigFile(filePath: string, content: string): unknown {
+    const ext = filePath.toLowerCase().split('.').pop();
+    
+    if (ext === 'json') {
+      try {
+        return JSON.parse(content);
+      } catch (error) {
+        throw SilkboardError.configInvalid(
+          `Failed to parse JSON config: ${(error as Error).message}`
+        );
+      }
+    }
+    
+    // Default to YAML parsing for .yaml, .yml, or unknown extensions
+    return parseYaml(content);
   }
 
   private mergeRoleConfig(

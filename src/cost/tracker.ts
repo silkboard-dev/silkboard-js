@@ -4,9 +4,8 @@ import type {
   UsageSummary,
   PricingConfig,
   ModelConfig,
-  SilkboardEvent,
-  SilkboardEventHandler,
 } from '../types';
+import type { SilkboardEventEmitter } from '../events';
 
 interface PricingCacheEntry {
   pricing: PricingConfig;
@@ -20,14 +19,16 @@ export class CostTracker {
   private pricingCache: PricingCache = {};
   private pricingCachePath: string | null = null;
   private modelConfigs: Record<string, ModelConfig>;
-  private eventHandlers: Map<keyof SilkboardEvent, Set<SilkboardEventHandler<any>>> = new Map();
+  private eventEmitter?: SilkboardEventEmitter;
 
   constructor(
     modelConfigs: Record<string, ModelConfig>,
-    pricingCachePath?: string
+    pricingCachePath?: string,
+    eventEmitter?: SilkboardEventEmitter
   ) {
     this.modelConfigs = modelConfigs;
     this.pricingCachePath = pricingCachePath ?? null;
+    this.eventEmitter = eventEmitter;
 
     if (pricingCachePath && existsSync(pricingCachePath)) {
       try {
@@ -50,7 +51,7 @@ export class CostTracker {
     };
 
     this.usage.push(fullRecord);
-    this.emit('usage', fullRecord);
+    this.eventEmitter?.emit('usage', fullRecord);
 
     return fullRecord;
   }
@@ -191,43 +192,12 @@ export class CostTracker {
     this.usage = [];
   }
 
-  on<K extends keyof SilkboardEvent>(
-    event: K,
-    handler: SilkboardEventHandler<K>
-  ): void {
-    if (!this.eventHandlers.has(event)) {
-      this.eventHandlers.set(event, new Set());
-    }
-    this.eventHandlers.get(event)!.add(handler);
-  }
-
-  off<K extends keyof SilkboardEvent>(
-    event: K,
-    handler: SilkboardEventHandler<K>
-  ): void {
-    this.eventHandlers.get(event)?.delete(handler);
-  }
-
-  private emit<K extends keyof SilkboardEvent>(
-    event: K,
-    data: SilkboardEvent[K]
-  ): void {
-    const handlers = this.eventHandlers.get(event);
-    if (handlers) {
-      for (const handler of handlers) {
-        try {
-          handler(data);
-        } catch (error) {
-          console.error(`[CostTracker] Event handler error:`, error);
-        }
-      }
-    }
-  }
 }
 
 export function createCostTracker(
   modelConfigs: Record<string, ModelConfig>,
-  pricingCachePath?: string
+  pricingCachePath?: string,
+  eventEmitter?: SilkboardEventEmitter
 ): CostTracker {
-  return new CostTracker(modelConfigs, pricingCachePath);
+  return new CostTracker(modelConfigs, pricingCachePath, eventEmitter);
 }

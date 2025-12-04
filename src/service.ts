@@ -5,6 +5,7 @@ import { CostTracker } from './cost/tracker';
 import { addAnthropicCacheControl } from './caching/anthropic';
 import { voyageEmbed, voyageRerank, isVoyageAvailable } from './providers/adapters/voyage';
 import { cohereRerank, isCohereAvailable } from './providers/adapters/cohere';
+import { SilkboardEventEmitter, generateRequestId } from './events';
 import type {
   SilkboardConfig,
   TextOptions,
@@ -16,6 +17,7 @@ import type {
   ReasoningOverride,
   SilkboardEvent,
   SilkboardEventHandler,
+  ResolvedModel,
 } from './types';
 import { SilkboardError } from './errors';
 
@@ -23,9 +25,11 @@ export class Silkboard {
   private configLoader: ConfigLoader;
   private registry: Registry;
   private costTracker: CostTracker;
+  private eventEmitter: SilkboardEventEmitter;
 
   constructor(config: SilkboardConfig) {
     this.configLoader = new ConfigLoader(config.environment);
+    this.eventEmitter = new SilkboardEventEmitter();
 
     // Load models config
     const modelsConfig = this.configLoader.loadModelsConfig(config.modelsConfig);
@@ -39,71 +43,110 @@ export class Silkboard {
     this.registry = new Registry(modelsConfig);
     this.costTracker = new CostTracker(
       modelsConfig.models,
-      config.pricingCache
+      config.pricingCache,
+      this.eventEmitter
     );
   }
 
   async streamText(options: TextOptions): Promise<ReturnType<typeof streamText>> {
     const { model, providerOptions, messages } = await this.resolveRequest(options);
+    const requestId = generateRequestId();
     const startTime = Date.now();
 
-    const result = await streamText({
-      model: model.instance,
-      messages: messages as any,
-      system: options.system,
-      tools: options.tools as any,
-      abortSignal: options.abortSignal,
-      providerOptions: {
-        ...model.providerOptions,
-        ...providerOptions,
-      } as any,
-      onFinish: async ({ usage }) => {
-        const usageAny = usage as any;
-        await this.costTracker.track({
-          model: model.alias,
-          role: options.role,
-          variant: options.variant,
-          inputTokens: usageAny.promptTokens ?? usageAny.inputTokens ?? 0,
-          outputTokens: usageAny.completionTokens ?? usageAny.outputTokens ?? 0,
-          cachedTokens: usageAny.cachedTokens,
-          reasoningTokens: usageAny.reasoningTokens,
-          latencyMs: Date.now() - startTime,
-        });
-      },
-    });
+    // Emit start event
+    this.emitStartEvent(requestId, model, options);
 
-    return result;
+    try {
+      const result = await streamText({
+        model: model.instance,
+        messages: messages as any,
+        system: options.system,
+        tools: options.tools as any,
+        abortSignal: options.abortSignal,
+        providerOptions: {
+          ...model.providerOptions,
+          ...providerOptions,
+        } as any,
+        onFinish: async ({ usage }) => {
+          const usageAny = usage as any;
+          const latencyMs = Date.now() - startTime;
+          const tokenUsage = {
+            inputTokens: usageAny.promptTokens ?? usageAny.inputTokens ?? 0,
+            outputTokens: usageAny.completionTokens ?? usageAny.outputTokens ?? 0,
+            cachedTokens: usageAny.cachedTokens,
+            reasoningTokens: usageAny.reasoningTokens,
+          };
+
+          // Track cost (also emits usage event)
+          await this.costTracker.track({
+            model: model.alias,
+            role: options.role,
+            variant: options.variant,
+            ...tokenUsage,
+            latencyMs,
+          });
+
+          // Emit complete event
+          this.emitCompleteEvent(requestId, model, options, latencyMs, tokenUsage);
+        },
+      });
+
+      return result;
+    } catch (error) {
+      // Emit error event
+      this.emitErrorEvent(requestId, model, error as Error, false);
+      throw error;
+    }
   }
 
   async generateText(options: TextOptions): Promise<Awaited<ReturnType<typeof generateText>>> {
     const { model, providerOptions, messages } = await this.resolveRequest(options);
+    const requestId = generateRequestId();
     const startTime = Date.now();
 
-    const result = await generateText({
-      model: model.instance,
-      messages: messages as any,
-      system: options.system,
-      tools: options.tools as any,
-      abortSignal: options.abortSignal,
-      providerOptions: {
-        ...model.providerOptions,
-        ...providerOptions,
-      } as any,
-    });
+    // Emit start event
+    this.emitStartEvent(requestId, model, options);
 
-    const usageAny = result.usage as any;
-    await this.costTracker.track({
-      model: model.alias,
-      role: options.role,
-      variant: options.variant,
-      inputTokens: usageAny.promptTokens ?? usageAny.inputTokens ?? 0,
-      outputTokens: usageAny.completionTokens ?? usageAny.outputTokens ?? 0,
-      cachedTokens: usageAny.cachedTokens,
-      reasoningTokens: usageAny.reasoningTokens,
-      latencyMs: Date.now() - startTime,
-    });
+    try {
+      const result = await generateText({
+        model: model.instance,
+        messages: messages as any,
+        system: options.system,
+        tools: options.tools as any,
+        abortSignal: options.abortSignal,
+        providerOptions: {
+          ...model.providerOptions,
+          ...providerOptions,
+        } as any,
+      });
 
-    return result;
+      const usageAny = result.usage as any;
+      const latencyMs = Date.now() - startTime;
+      const tokenUsage = {
+        inputTokens: usageAny.promptTokens ?? usageAny.inputTokens ?? 0,
+        outputTokens: usageAny.completionTokens ?? usageAny.outputTokens ?? 0,
+        cachedTokens: usageAny.cachedTokens,
+        reasoningTokens: usageAny.reasoningTokens,
+      };
+
+      // Track cost (also emits usage event)
+      await this.costTracker.track({
+        model: model.alias,
+        role: options.role,
+        variant: options.variant,
+        ...tokenUsage,
+        latencyMs,
+      });
+
+      // Emit complete event
+      this.emitCompleteEvent(requestId, model, options, latencyMs, tokenUsage);
+
+      return result;
+    } catch (error) {
+      // Emit error event
+      this.emitErrorEvent(requestId, model, error as Error, false);
+      throw error;
+    }
   }
 
   async embed(options: EmbedOptions): Promise<{ embedding: number[]; embeddings: number[][] }> {
@@ -287,14 +330,72 @@ export class Silkboard {
     event: K,
     handler: SilkboardEventHandler<K>
   ): void {
-    this.costTracker.on(event, handler);
+    this.eventEmitter.on(event, handler);
   }
 
   off<K extends keyof SilkboardEvent>(
     event: K,
     handler: SilkboardEventHandler<K>
   ): void {
-    this.costTracker.off(event, handler);
+    this.eventEmitter.off(event, handler);
+  }
+
+  // Private event emission helpers
+  private emitStartEvent(
+    requestId: string,
+    model: ResolvedModel,
+    options: TextOptions
+  ): void {
+    this.eventEmitter.emit('start', {
+      requestId,
+      model: model.alias,
+      provider: model.config.provider,
+      role: options.role,
+      variant: options.variant,
+      timestamp: new Date(),
+    });
+  }
+
+  private emitCompleteEvent(
+    requestId: string,
+    model: ResolvedModel,
+    options: TextOptions,
+    latencyMs: number,
+    usage: {
+      inputTokens: number;
+      outputTokens: number;
+      cachedTokens?: number;
+      reasoningTokens?: number;
+    }
+  ): void {
+    this.eventEmitter.emit('complete', {
+      requestId,
+      model: model.alias,
+      provider: model.config.provider,
+      role: options.role,
+      variant: options.variant,
+      latencyMs,
+      usage,
+      timestamp: new Date(),
+    });
+  }
+
+  private emitErrorEvent(
+    requestId: string,
+    model: ResolvedModel,
+    error: Error,
+    willRetry: boolean,
+    retryAttempt?: number
+  ): void {
+    this.eventEmitter.emit('error', {
+      requestId,
+      model: model.alias,
+      provider: model.config.provider,
+      error,
+      willRetry,
+      retryAttempt,
+      timestamp: new Date(),
+    });
   }
 
   // Utility methods

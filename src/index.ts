@@ -96,6 +96,32 @@ export {
 export { CostTracker, createCostTracker } from './cost/tracker';
 
 /**
+ * Event system for observability and lifecycle hooks.
+ * @see {@link SilkboardEventEmitter} for the event emitter class
+ * @see {@link generateRequestId} for creating unique request IDs
+ * 
+ * @example
+ * ```typescript
+ * silk.on('start', ({ requestId, model }) => {
+ *   console.log(`Request ${requestId} started with model ${model}`);
+ * });
+ * 
+ * silk.on('complete', ({ latencyMs, usage }) => {
+ *   metrics.timing('request.latency', latencyMs);
+ * });
+ * 
+ * silk.on('error', ({ error, willRetry }) => {
+ *   if (!willRetry) alerting.notify(error);
+ * });
+ * ```
+ */
+export {
+  SilkboardEventEmitter,
+  generateRequestId,
+  createEventEmitter,
+} from './events';
+
+/**
  * Custom error classes with error codes for better error handling.
  * @see {@link SilkboardError} for the base error class
  * @see {@link SilkboardErrorCode} for available error codes
@@ -179,7 +205,15 @@ export type {
   ResolvedEmbeddingModel,
   
   // Events
+  TokenUsage,
   UsageEvent,
+  StartEvent,
+  CompleteEvent,
+  ErrorEvent,
+  RetryEvent,
+  FallbackEvent,
+  CacheHitEvent,
+  CacheMissEvent,
   SilkboardEvent,
   SilkboardEventHandler,
 } from './types';
