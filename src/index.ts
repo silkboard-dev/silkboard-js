@@ -160,6 +160,31 @@ export {
 } from './budget';
 
 /**
+ * Vault system for secure API key management.
+ * @see {@link VaultManager} for the main vault class
+ * @see {@link EnvVault} for environment variable vault
+ * 
+ * @example
+ * ```typescript
+ * const vault = new VaultManager({
+ *   keyMappings: {
+ *     'openai': 'OPENAI_API_KEY',
+ *     'anthropic': 'ANTHROPIC_API_KEY',
+ *   },
+ *   cacheSecrets: true,
+ * });
+ * 
+ * const apiKey = await vault.getSecret('openai');
+ * ```
+ */
+export {
+  EnvVault,
+  createEnvVault,
+  VaultManager,
+  createVaultManager,
+} from './vault';
+
+/**
  * Telemetry interfaces for logging and metrics.
  * @see {@link SilkboardLogger} for pluggable logging
  * @see {@link SilkboardMetrics} for pluggable metrics
@@ -257,4 +282,9 @@ export type {
   BudgetAlertEvent,
   BudgetExceededEvent,
   BudgetStore,
+  
+  // Vault types
+  VaultService,
+  VaultConfig,
+  SecretResult,
 } from './types';

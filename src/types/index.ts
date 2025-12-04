@@ -55,6 +55,13 @@ export type {
   BudgetStore,
 } from './budget';
 
+// Vault types
+export type {
+  VaultService,
+  VaultConfig,
+  SecretResult,
+} from './vault';
+
 // Request/response types
 export type {
   BaseRequestOptions,
