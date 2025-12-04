@@ -1,6 +1,8 @@
-# @gwrag/llm-service
+# silkboard
 
-A unified LLM service for managing 50+ models across multiple providers with proper reasoning configuration, caching, and cost tracking. Built on [Vercel AI SDK v6](https://ai-sdk.dev/).
+> *Named after Silk Board Junction in Bengaluru - where all routes converge and heavy traffic flows through one of the most complex intersections in India.*
+
+A unified LLM router for managing 50+ models across multiple providers with proper reasoning configuration, caching, and cost tracking. Built on [Vercel AI SDK v6](https://ai-sdk.dev/).
 
 ## Features
 
@@ -15,13 +17,13 @@ A unified LLM service for managing 50+ models across multiple providers with pro
 ## Installation
 
 ```bash
-npm install @gwrag/llm-service ai
+npm install silkboard ai
 ```
 
 ## Quick Start
 
 ```typescript
-import { LLMService } from '@gwrag/llm-service';
+import { LLMService } from 'silkboard';
 
 const llm = new LLMService({
   modelsConfig: './config/models.yaml',
@@ -62,6 +64,13 @@ console.log(usage.totalCost, usage.byModel, usage.byRole);
 ```
 
 ## Configuration
+
+Copy the example files to get started:
+
+```bash
+cp config/models.yaml.example config/models.yaml
+cp config/roles.yaml.example config/roles.yaml
+```
 
 ### models.yaml
 

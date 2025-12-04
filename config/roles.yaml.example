@@ -1,0 +1,205 @@
+# Silkboard Roles Configuration
+# Copy this file to roles.yaml and customize for your needs
+#
+# Roles map functional purposes to specific models, allowing you to:
+# - Switch models without changing application code
+# - Define variants (fast/balanced/accurate) for different use cases
+# - Set up fallbacks for reliability
+# - Override model parameters per-role
+version: "1.0"
+
+roles:
+  # =============================================================================
+  # Simple Roles (single model, no variants)
+  # =============================================================================
+  
+  # Quick query understanding and intent classification
+  query:
+    model: gpt-4.1-mini
+    overrides:
+      parameters:
+        temperature: 0.3
+
+  # Document grading and relevance scoring
+  grader:
+    model: gpt-4.1-nano
+    overrides:
+      parameters:
+        temperature: 0.0
+
+  # Summarization tasks
+  summarizer:
+    model: claude-haiku-3.5
+    overrides:
+      parameters:
+        temperature: 0.5
+
+  # =============================================================================
+  # Variant Roles (multiple quality/speed tiers)
+  # =============================================================================
+  
+  # Main answer generation with quality tiers
+  answer:
+    fast:
+      model: llama-3.3-70b-cerebras
+      overrides:
+        parameters:
+          temperature: 0.7
+    balanced:
+      model: claude-sonnet-4
+      overrides:
+        reasoning:
+          budget: 8000
+        parameters:
+          temperature: 0.7
+    accurate:
+      model: claude-opus-4
+      overrides:
+        reasoning:
+          budget: 16000
+        parameters:
+          temperature: 0.5
+
+  # Code generation and analysis
+  coder:
+    fast:
+      model: gpt-4.1-mini
+      overrides:
+        parameters:
+          temperature: 0.2
+    balanced:
+      model: claude-sonnet-4
+      overrides:
+        reasoning:
+          budget: 4000
+        parameters:
+          temperature: 0.3
+    accurate:
+      model: claude-opus-4
+      overrides:
+        reasoning:
+          budget: 12000
+        parameters:
+          temperature: 0.2
+
+  # Complex reasoning tasks
+  reasoning:
+    fast:
+      model: o4-mini
+      overrides:
+        reasoning:
+          effort: low
+    balanced:
+      model: o3
+      overrides:
+        reasoning:
+          effort: medium
+    accurate:
+      model: o3
+      overrides:
+        reasoning:
+          effort: high
+
+  # Research and analysis
+  research:
+    fast:
+      model: gemini-2.5-flash
+      overrides:
+        reasoning:
+          budget: 2048
+    balanced:
+      model: gemini-2.5-pro
+      overrides:
+        reasoning:
+          budget: 8192
+    accurate:
+      model: claude-opus-4
+      overrides:
+        reasoning:
+          budget: 20000
+
+  # =============================================================================
+  # Fallback Roles (primary + backup for reliability)
+  # =============================================================================
+  
+  # Embedding with fallback
+  embedding:
+    primary: text-embedding-3-large
+    fallback: voyage-3-large
+
+  # Code embedding
+  code-embedding:
+    primary: voyage-code-3
+    fallback: text-embedding-3-large
+
+  # Reranking with fallback
+  reranker:
+    primary: rerank-2
+    fallback: rerank-cohere
+
+  # =============================================================================
+  # Specialized Roles
+  # =============================================================================
+  
+  # Long context processing (1M+ tokens)
+  long-context:
+    model: gemini-2.5-pro
+    overrides:
+      reasoning:
+        budget: 4096
+
+  # Ultra-fast responses (latency-critical)
+  realtime:
+    model: llama-3.3-70b-cerebras
+
+  # Cost-optimized batch processing
+  batch:
+    model: gpt-4.1-nano
+    overrides:
+      parameters:
+        temperature: 0.0
+
+  # Creative writing
+  creative:
+    model: claude-sonnet-4
+    overrides:
+      parameters:
+        temperature: 0.9
+
+# =============================================================================
+# Environment Overrides
+# =============================================================================
+# Use cheaper/faster models in development, premium models in production
+
+environments:
+  development:
+    # Downgrade expensive models in dev
+    answer.accurate:
+      model: claude-sonnet-4
+      overrides:
+        reasoning:
+          budget: 4000
+    coder.accurate:
+      model: claude-sonnet-4
+    reasoning.accurate:
+      model: o4-mini
+      overrides:
+        reasoning:
+          effort: medium
+    research.accurate:
+      model: gemini-2.5-pro
+      overrides:
+        reasoning:
+          budget: 8192
+
+  staging:
+    # Use production models but with lower reasoning budgets
+    answer.accurate:
+      model: claude-opus-4
+      overrides:
+        reasoning:
+          budget: 8000
+
+  production:
+    # Full power in production (uses defaults from role definitions)
+    pass

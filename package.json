@@ -1,7 +1,7 @@
 {
-  "name": "@gwrag/llm-service",
+  "name": "silkboard",
   "version": "0.1.0",
-  "description": "Unified LLM service with multi-provider support, reasoning configuration, caching, and cost tracking",
+  "description": "Silkboard - A unified LLM router where all AI providers converge. Multi-provider support, reasoning configuration, caching, and cost tracking.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",

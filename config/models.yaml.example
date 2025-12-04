@@ -1,0 +1,294 @@
+# Silkboard Models Configuration
+# Copy this file to models.yaml and customize for your needs
+version: "1.0"
+
+models:
+  # =============================================================================
+  # OpenAI Models
+  # =============================================================================
+  gpt-4.1:
+    provider: openai
+    model_id: gpt-4.1
+    type: language
+    context_window: 1047576
+    parameters:
+      temperature: 1.0
+    pricing:
+      input: 2.00
+      output: 8.00
+
+  gpt-4.1-mini:
+    provider: openai
+    model_id: gpt-4.1-mini
+    type: language
+    context_window: 1047576
+    parameters:
+      temperature: 1.0
+    pricing:
+      input: 0.40
+      output: 1.60
+
+  gpt-4.1-nano:
+    provider: openai
+    model_id: gpt-4.1-nano
+    type: language
+    context_window: 1047576
+    parameters:
+      temperature: 1.0
+    pricing:
+      input: 0.10
+      output: 0.40
+
+  # OpenAI reasoning model
+  o3:
+    provider: openai
+    model_id: o3
+    type: language
+    reasoning:
+      style: effort
+      values: [low, medium, high]
+      default: medium
+    context_window: 200000
+    pricing:
+      input: 2.00
+      output: 8.00
+
+  o4-mini:
+    provider: openai
+    model_id: o4-mini
+    type: language
+    reasoning:
+      style: effort
+      values: [low, medium, high]
+      default: low
+    context_window: 200000
+    pricing:
+      input: 1.10
+      output: 4.40
+
+  # =============================================================================
+  # Anthropic Models
+  # =============================================================================
+  claude-opus-4:
+    provider: anthropic
+    model_id: claude-opus-4-20250514
+    type: language
+    reasoning:
+      style: budget
+      min: 1024
+      max: 200000
+      default: 10000
+    caching:
+      style: manual  # Supports cache_control blocks
+    context_window: 200000
+    pricing:
+      input: 15.00
+      output: 75.00
+      cached_input: 1.50
+
+  claude-sonnet-4:
+    provider: anthropic
+    model_id: claude-sonnet-4-20250514
+    type: language
+    reasoning:
+      style: budget
+      min: 1024
+      max: 200000
+      default: 8000
+    caching:
+      style: manual
+    context_window: 200000
+    pricing:
+      input: 3.00
+      output: 15.00
+      cached_input: 0.30
+
+  claude-haiku-3.5:
+    provider: anthropic
+    model_id: claude-3-5-haiku-20241022
+    type: language
+    caching:
+      style: manual
+    context_window: 200000
+    pricing:
+      input: 0.80
+      output: 4.00
+      cached_input: 0.08
+
+  # =============================================================================
+  # Google Models
+  # =============================================================================
+  gemini-2.5-pro:
+    provider: google
+    model_id: gemini-2.5-pro-preview-06-05
+    type: language
+    reasoning:
+      style: budget  # Gemini 2.5 uses budget-based thinking
+      min: 0
+      max: 32768
+      default: 8192
+    context_window: 1048576
+    pricing:
+      input: 1.25
+      output: 10.00
+
+  gemini-2.5-flash:
+    provider: google
+    model_id: gemini-2.5-flash-preview-05-20
+    type: language
+    reasoning:
+      style: budget
+      min: 0
+      max: 24576
+      default: 4096
+    context_window: 1048576
+    pricing:
+      input: 0.15
+      output: 0.60
+
+  gemini-2.0-flash:
+    provider: google
+    model_id: gemini-2.0-flash
+    type: language
+    context_window: 1048576
+    pricing:
+      input: 0.10
+      output: 0.40
+
+  # =============================================================================
+  # Groq Models (Fast inference)
+  # =============================================================================
+  llama-4-scout:
+    provider: groq
+    model_id: meta-llama/llama-4-scout-17b-16e-instruct
+    type: language
+    context_window: 131072
+    pricing:
+      input: 0.11
+      output: 0.34
+
+  llama-4-maverick:
+    provider: groq
+    model_id: meta-llama/llama-4-maverick-17b-128e-instruct
+    type: language
+    context_window: 131072
+    pricing:
+      input: 0.50
+      output: 0.77
+
+  # =============================================================================
+  # Cerebras Models (Ultra-fast inference)
+  # =============================================================================
+  llama-3.3-70b-cerebras:
+    provider: cerebras
+    model_id: llama-3.3-70b
+    type: language
+    context_window: 128000
+    pricing:
+      input: 0.60
+      output: 0.60
+
+  # =============================================================================
+  # xAI Models
+  # =============================================================================
+  grok-3:
+    provider: xai
+    model_id: grok-3
+    type: language
+    reasoning:
+      style: effort
+      values: [low, high]
+      default: low
+    context_window: 131072
+    pricing:
+      input: 3.00
+      output: 15.00
+
+  grok-3-fast:
+    provider: xai
+    model_id: grok-3-fast
+    type: language
+    context_window: 131072
+    pricing:
+      input: 5.00
+      output: 25.00
+
+  # =============================================================================
+  # OpenRouter Models (Access any model via OpenRouter)
+  # =============================================================================
+  deepseek-r1:
+    provider: openrouter
+    model_id: deepseek/deepseek-r1
+    type: language
+    reasoning:
+      style: budget
+      default: 8000
+    context_window: 64000
+    pricing:
+      input: 0.55
+      output: 2.19
+
+  qwen-qwq:
+    provider: openrouter
+    model_id: qwen/qwq-32b
+    type: language
+    context_window: 32000
+    pricing:
+      input: 0.12
+      output: 0.18
+
+  # =============================================================================
+  # Embedding Models
+  # =============================================================================
+  text-embedding-3-large:
+    provider: openai
+    model_id: text-embedding-3-large
+    type: embedding
+    parameters:
+      dimensions: 3072
+    pricing:
+      input: 0.13
+
+  text-embedding-3-small:
+    provider: openai
+    model_id: text-embedding-3-small
+    type: embedding
+    parameters:
+      dimensions: 1536
+    pricing:
+      input: 0.02
+
+  voyage-3-large:
+    provider: voyage
+    model_id: voyage-3-large
+    type: embedding
+    parameters:
+      dimensions: 1024
+    pricing:
+      input: 0.18
+
+  voyage-code-3:
+    provider: voyage
+    model_id: voyage-code-3
+    type: embedding
+    parameters:
+      dimensions: 1024
+    pricing:
+      input: 0.18
+
+  # =============================================================================
+  # Reranker Models
+  # =============================================================================
+  rerank-2:
+    provider: voyage
+    model_id: rerank-2
+    type: reranker
+    pricing:
+      input: 0.05
+
+  rerank-cohere:
+    provider: cohere
+    model_id: rerank-v3.5
+    type: reranker
+    pricing:
+      input: 0.02

@@ -32,6 +32,11 @@ coverage/
 # Pricing cache (contains fetched data)
 .pricing-cache.json
 
+# User config files (use .example files as templates)
+config/models.yaml
+config/roles.yaml
+!config/*.example
+
 # Lock files (use parent project's lock)
 package-lock.json
 pnpm-lock.yaml
