@@ -205,6 +205,10 @@ export interface SilkboardEvent {
   cacheHit: CacheHitEvent;
   /** Emitted on cache miss */
   cacheMiss: CacheMissEvent;
+  /** Emitted when budget alert threshold is reached */
+  budgetAlert: import('./budget').BudgetAlertEvent;
+  /** Emitted when budget is exceeded */
+  budgetExceeded: import('./budget').BudgetExceededEvent;
 }
 
 /** Event handler type */

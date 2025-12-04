@@ -43,6 +43,18 @@ export type {
   SilkboardConfig,
 } from './config';
 
+// Budget types
+export type {
+  BudgetDuration,
+  BudgetConfig,
+  BudgetRecord,
+  BudgetStatus,
+  BudgetCheckResult,
+  BudgetAlertEvent,
+  BudgetExceededEvent,
+  BudgetStore,
+} from './budget';
+
 // Request/response types
 export type {
   BaseRequestOptions,

@@ -129,6 +129,37 @@ export {
 export { SilkboardError, SilkboardErrorCode } from './errors';
 
 /**
+ * Budget management for per-user cost tracking and limits.
+ * @see {@link BudgetManager} for budget tracking
+ * @see {@link MemoryBudgetStore} for in-memory storage
+ * 
+ * @example
+ * ```typescript
+ * const manager = new BudgetManager();
+ * 
+ * await manager.createBudget('user-123', {
+ *   totalBudget: 100,
+ *   duration: 'monthly',
+ *   alertThreshold: 0.8,
+ *   hardLimit: true,
+ * });
+ * 
+ * const check = await manager.checkBudget('user-123', 0.05);
+ * if (check.allowed) {
+ *   // proceed with request
+ *   await manager.recordUsage('user-123', 0.05);
+ * }
+ * ```
+ */
+export {
+  BudgetManager,
+  createBudgetManager,
+  MemoryBudgetStore,
+  createMemoryBudgetStore,
+  type BudgetManagerConfig,
+} from './budget';
+
+/**
  * Telemetry interfaces for logging and metrics.
  * @see {@link SilkboardLogger} for pluggable logging
  * @see {@link SilkboardMetrics} for pluggable metrics
@@ -216,4 +247,14 @@ export type {
   CacheMissEvent,
   SilkboardEvent,
   SilkboardEventHandler,
+  
+  // Budget types
+  BudgetDuration,
+  BudgetConfig,
+  BudgetRecord,
+  BudgetStatus,
+  BudgetCheckResult,
+  BudgetAlertEvent,
+  BudgetExceededEvent,
+  BudgetStore,
 } from './types';
