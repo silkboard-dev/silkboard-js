@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LLM Service Roles Configuration",
+  "type": "object",
+  "required": ["version", "roles"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "roles": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["model"],
+            "properties": {
+              "model": { "type": "string" },
+              "overrides": { "$ref": "#/definitions/overrides" }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["primary", "fallback"],
+            "properties": {
+              "primary": { "type": "string" },
+              "fallback": { "type": "string" },
+              "overrides": { "$ref": "#/definitions/overrides" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["model"],
+              "properties": {
+                "model": { "type": "string" },
+                "overrides": { "$ref": "#/definitions/overrides" }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "environments": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "model": { "type": "string" },
+            "overrides": { "$ref": "#/definitions/overrides" }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "overrides": {
+      "type": "object",
+      "properties": {
+        "reasoning": {
+          "type": "object",
+          "properties": {
+            "effort": { "type": "string", "enum": ["low", "medium", "high", "minimal", "none"] },
+            "budget": { "type": "integer" },
+            "level": { "type": "string", "enum": ["low", "high"] },
+            "enabled": { "type": "boolean" }
+          }
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "temperature": { "type": "number" },
+            "top_p": { "type": "number" },
+            "top_k": { "type": "integer" },
+            "max_tokens": { "type": "integer" },
+            "dimensions": { "type": "integer" },
+            "input_type": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

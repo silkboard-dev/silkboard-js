@@ -1,0 +1,317 @@
+version: "1.0"
+
+# =============================================================================
+# PROVIDER CONFIGURATIONS
+# =============================================================================
+providers:
+  openai:
+    env_key: OPENAI_API_KEY
+  anthropic:
+    env_key: ANTHROPIC_API_KEY
+  google:
+    env_key: GEMINI_API_KEY
+  groq:
+    env_key: GROQ_API_KEY
+  cerebras:
+    env_key: CEREBRAS_API_KEY
+  xai:
+    env_key: XAI_API_KEY
+  cohere:
+    env_key: COHERE_API_KEY
+  openrouter:
+    env_key: OPENROUTER_API_KEY
+    base_url: https://openrouter.ai/api/v1
+  voyage:
+    env_key: VOYAGE_API_KEY
+    sdk: native
+
+# =============================================================================
+# MODEL DEFINITIONS
+# =============================================================================
+models:
+  # ---------------------------------------------------------------------------
+  # OPENAI MODELS (Effort-based reasoning)
+  # ---------------------------------------------------------------------------
+  gpt-5.1:
+    provider: openai
+    model_id: gpt-5.1
+    type: language
+    reasoning:
+      style: effort
+      values: [low, medium, high]
+      default: medium
+    parameters:
+      temperature: 1.0
+      max_tokens: 16384
+    context_window: 400000
+    pricing:
+      input: 1.25
+      output: 10.00
+      cached: 0.625
+
+  gpt-5-mini:
+    provider: openai
+    model_id: gpt-5-mini
+    type: language
+    reasoning:
+      style: effort
+      values: [low, medium, high]
+      default: medium
+    parameters:
+      temperature: 1.0
+      max_tokens: 16384
+    context_window: 200000
+    pricing:
+      input: 0.15
+      output: 0.60
+      cached: 0.075
+
+  # ---------------------------------------------------------------------------
+  # ANTHROPIC MODELS (Budget-based thinking)
+  # ---------------------------------------------------------------------------
+  claude-opus-4.5:
+    provider: anthropic
+    model_id: claude-opus-4-5-20251101
+    type: language
+    reasoning:
+      style: budget
+      min: 1024
+      max: 200000
+      default: 32000
+    caching:
+      style: manual
+      discount: 0.90
+    parameters:
+      temperature: 1.0
+      max_tokens: 128000
+    context_window: 200000
+    pricing:
+      input: 5.00
+      output: 25.00
+
+  claude-sonnet-4.5:
+    provider: anthropic
+    model_id: claude-sonnet-4-5-20250929
+    type: language
+    reasoning:
+      style: budget
+      min: 1024
+      max: 200000
+      default: 16000
+    caching:
+      style: manual
+      discount: 0.90
+    parameters:
+      temperature: 1.0
+      max_tokens: 64000
+    context_window: 200000
+    pricing:
+      input: 3.00
+      output: 15.00
+
+  claude-haiku-4.5:
+    provider: anthropic
+    model_id: claude-haiku-4-5-20251001
+    type: language
+    reasoning:
+      style: budget
+      min: 1024
+      max: 200000
+      default: 8000
+    caching:
+      style: manual
+      discount: 0.90
+    parameters:
+      temperature: 1.0
+      max_tokens: 32000
+    context_window: 200000
+    pricing:
+      input: 0.80
+      output: 4.00
+
+  # ---------------------------------------------------------------------------
+  # GOOGLE GEMINI MODELS
+  # ---------------------------------------------------------------------------
+  gemini-3-pro:
+    provider: google
+    model_id: gemini-3-pro-preview
+    type: language
+    reasoning:
+      style: level
+      values: [low, high]
+      default: high
+      can_disable: false
+    parameters:
+      temperature: 1.0
+      max_tokens: 65536
+    context_window: 2000000
+    pricing:
+      input: 1.25
+      output: 5.00
+
+  gemini-2.5-pro:
+    provider: google
+    model_id: gemini-2.5-pro
+    type: language
+    reasoning:
+      style: budget
+      min: 128
+      max: 32768
+      default: -1
+      can_disable: false
+    parameters:
+      temperature: 1.0
+      max_tokens: 65536
+    context_window: 1000000
+    pricing:
+      input: 1.25
+      output: 5.00
+      cached: 0.31
+
+  gemini-2.5-flash:
+    provider: google
+    model_id: gemini-2.5-flash
+    type: language
+    reasoning:
+      style: budget
+      min: 0
+      max: 24576
+      default: -1
+      can_disable: true
+    parameters:
+      temperature: 1.0
+      max_tokens: 65536
+    context_window: 1000000
+    pricing:
+      input: 0.15
+      output: 0.60
+
+  # ---------------------------------------------------------------------------
+  # GROQ MODELS (Fast inference)
+  # ---------------------------------------------------------------------------
+  kimi-k2-groq:
+    provider: groq
+    model_id: moonshotai/kimi-k2-instruct
+    type: language
+    reasoning:
+      style: none
+    parameters:
+      temperature: 0.7
+      max_tokens: 32768
+    context_window: 131072
+    pricing:
+      input: 0.0
+      output: 0.0
+
+  # ---------------------------------------------------------------------------
+  # OPENROUTER GATEWAY MODELS
+  # ---------------------------------------------------------------------------
+  glm-4.6-cerebras:
+    provider: openrouter
+    model_id: z-ai/glm-4.6
+    type: language
+    reasoning:
+      style: toggle
+      default: true
+    routing:
+      only: [cerebras]
+    parameters:
+      temperature: 0.7
+      max_tokens: 32768
+    context_window: 202752
+    pricing:
+      input: 0.40
+      output: 1.75
+
+  grok-4.1-fast:
+    provider: openrouter
+    model_id: x-ai/grok-4.1-fast
+    type: language
+    reasoning:
+      style: effort
+      values: [low, medium, high, minimal, none]
+      default: medium
+    parameters:
+      temperature: 0.7
+      max_tokens: 32768
+    context_window: 2000000
+    pricing:
+      input: 0.20
+      output: 0.50
+
+  claude-sonnet-or:
+    provider: openrouter
+    model_id: anthropic/claude-sonnet-4-5
+    type: language
+    reasoning:
+      style: budget
+      min: 1024
+      max: 32000
+      default: 16000
+    routing:
+      only: [anthropic]
+    parameters:
+      temperature: 1.0
+      max_tokens: 64000
+    context_window: 200000
+    pricing:
+      input: 3.00
+      output: 15.00
+
+  # ---------------------------------------------------------------------------
+  # EMBEDDING MODELS
+  # ---------------------------------------------------------------------------
+  text-embedding-3-large:
+    provider: openai
+    model_id: text-embedding-3-large
+    type: embedding
+    parameters:
+      dimensions: 3072
+    pricing:
+      input: 0.13
+
+  text-embedding-3-small:
+    provider: openai
+    model_id: text-embedding-3-small
+    type: embedding
+    parameters:
+      dimensions: 1536
+    pricing:
+      input: 0.02
+
+  voyage-3-large:
+    provider: voyage
+    model_id: voyage-3-large
+    type: embedding
+    parameters:
+      input_type: document
+    pricing:
+      input: 0.18
+
+  voyage-3.5:
+    provider: voyage
+    model_id: voyage-3.5
+    type: embedding
+    parameters:
+      input_type: document
+    pricing:
+      input: 0.06
+
+  # ---------------------------------------------------------------------------
+  # RERANKER MODELS
+  # ---------------------------------------------------------------------------
+  rerank-2.5:
+    provider: voyage
+    model_id: rerank-2.5
+    type: reranker
+    context_window: 32000
+    pricing:
+      input: 0.05
+
+  rerank-cohere:
+    provider: cohere
+    model_id: rerank-v3.5
+    type: reranker
+    context_window: 4096
+    pricing:
+      per_search: 2.00

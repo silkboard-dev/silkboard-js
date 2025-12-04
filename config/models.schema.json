@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LLM Service Models Configuration",
+  "type": "object",
+  "required": ["version", "models"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "providers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["env_key"],
+        "properties": {
+          "env_key": { "type": "string" },
+          "base_url": { "type": "string", "format": "uri" },
+          "sdk": { "type": "string", "enum": ["ai-sdk", "native"] },
+          "headers": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      }
+    },
+    "models": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["provider", "model_id", "type", "pricing"],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["openai", "anthropic", "google", "groq", "cerebras", "xai", "cohere", "openrouter", "voyage"]
+          },
+          "model_id": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": ["language", "embedding", "reranker"]
+          },
+          "reasoning": {
+            "type": "object",
+            "required": ["style"],
+            "properties": {
+              "style": {
+                "type": "string",
+                "enum": ["effort", "budget", "level", "toggle", "none"]
+              },
+              "values": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "default": {},
+              "min": { "type": "number" },
+              "max": { "type": "number" },
+              "can_disable": { "type": "boolean" }
+            }
+          },
+          "caching": {
+            "type": "object",
+            "properties": {
+              "style": {
+                "type": "string",
+                "enum": ["auto", "manual", "none"]
+              },
+              "discount": { "type": "number", "minimum": 0, "maximum": 1 },
+              "min_tokens": { "type": "integer", "minimum": 0 },
+              "ttl_minutes": { "type": "integer", "minimum": 0 }
+            }
+          },
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "temperature": { "type": "number", "minimum": 0, "maximum": 2 },
+              "top_p": { "type": "number", "minimum": 0, "maximum": 1 },
+              "top_k": { "type": "integer", "minimum": 0 },
+              "max_tokens": { "type": "integer", "minimum": 1 },
+              "dimensions": { "type": "integer", "minimum": 1 },
+              "input_type": { "type": "string", "enum": ["document", "query"] }
+            }
+          },
+          "routing": {
+            "type": "object",
+            "properties": {
+              "only": { "type": "array", "items": { "type": "string" } },
+              "order": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "context_window": { "type": "integer", "minimum": 1 },
+          "pricing": {
+            "type": "object",
+            "required": ["input"],
+            "properties": {
+              "input": { "type": "number", "minimum": 0 },
+              "output": { "type": "number", "minimum": 0 },
+              "cached": { "type": "number", "minimum": 0 },
+              "reasoning": { "type": "number", "minimum": 0 },
+              "per_search": { "type": "number", "minimum": 0 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,115 @@
+version: "1.0"
+
+# =============================================================================
+# ROLE ASSIGNMENTS
+# Map functional roles to model aliases with optional overrides
+# =============================================================================
+
+roles:
+  # ---------------------------------------------------------------------------
+  # QUERY PROCESSING
+  # ---------------------------------------------------------------------------
+  query:
+    model: gpt-5-mini
+    overrides:
+      reasoning:
+        effort: low
+      parameters:
+        max_tokens: 1024
+
+  # ---------------------------------------------------------------------------
+  # DOCUMENT GRADING
+  # ---------------------------------------------------------------------------
+  grader:
+    model: claude-haiku-4.5
+    overrides:
+      reasoning:
+        budget: 1024
+      parameters:
+        max_tokens: 256
+
+  # ---------------------------------------------------------------------------
+  # EMBEDDINGS
+  # ---------------------------------------------------------------------------
+  embedding:
+    model: text-embedding-3-large
+
+  embedding-fast:
+    model: voyage-3.5
+
+  # ---------------------------------------------------------------------------
+  # RERANKING (with fallback)
+  # ---------------------------------------------------------------------------
+  reranker:
+    primary: rerank-2.5
+    fallback: rerank-cohere
+
+  # ---------------------------------------------------------------------------
+  # ANSWER GENERATION (variants)
+  # ---------------------------------------------------------------------------
+  answer:
+    fast:
+      model: glm-4.6-cerebras
+      overrides:
+        reasoning:
+          enabled: true
+        parameters:
+          max_tokens: 4096
+
+    balanced:
+      model: claude-sonnet-4.5
+      overrides:
+        reasoning:
+          budget: 8000
+        parameters:
+          max_tokens: 16000
+
+    accurate:
+      model: claude-opus-4.5
+      overrides:
+        reasoning:
+          budget: 32000
+        parameters:
+          max_tokens: 32000
+
+  # ---------------------------------------------------------------------------
+  # SUMMARIZATION
+  # ---------------------------------------------------------------------------
+  summarizer:
+    model: claude-haiku-4.5
+    overrides:
+      reasoning:
+        budget: 2048
+      parameters:
+        temperature: 0.3
+        max_tokens: 2048
+
+  # ---------------------------------------------------------------------------
+  # CODE GENERATION
+  # ---------------------------------------------------------------------------
+  coder:
+    model: claude-sonnet-4.5
+    overrides:
+      reasoning:
+        budget: 16000
+      parameters:
+        max_tokens: 32000
+
+# =============================================================================
+# ENVIRONMENT OVERRIDES
+# Override role configurations per environment
+# =============================================================================
+environments:
+  development:
+    # Use cheaper models in development
+    answer.accurate:
+      model: claude-sonnet-4.5
+    coder:
+      model: claude-haiku-4.5
+      overrides:
+        reasoning:
+          budget: 8000
+
+  production:
+    # Use full capabilities in production
+    # (defaults are already production-optimized)

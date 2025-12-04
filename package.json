@@ -1,0 +1,71 @@
+{
+  "name": "@gwrag/llm-service",
+  "version": "0.1.0",
+  "description": "Unified LLM service with multi-provider support, reasoning configuration, caching, and cost tracking",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "config"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "llm",
+    "ai",
+    "openai",
+    "anthropic",
+    "google",
+    "gemini",
+    "groq",
+    "ai-sdk",
+    "multi-provider",
+    "reasoning",
+    "embeddings",
+    "reranking"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "ai": "^6.0.0-beta"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.0-beta",
+    "@ai-sdk/google": "^3.0.0-beta",
+    "@ai-sdk/groq": "^3.0.0-beta",
+    "@ai-sdk/openai": "^3.0.0-beta",
+    "@ai-sdk/openai-compatible": "^1.0.0-beta",
+    "@ai-sdk/xai": "^3.0.0-beta",
+    "@ai-sdk/cerebras": "^2.0.0-beta",
+    "@ai-sdk/cohere": "^3.0.0-beta",
+    "voyageai": "^0.0.8",
+    "yaml": "^2.3.4",
+    "ajv": "^8.12.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0",
+    "rimraf": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
