@@ -4,8 +4,8 @@ import type {
   UsageSummary,
   PricingConfig,
   ModelConfig,
-  LLMServiceEvent,
-  LLMServiceEventHandler,
+  SilkboardEvent,
+  SilkboardEventHandler,
 } from '../types';
 
 interface PricingCacheEntry {
@@ -20,7 +20,7 @@ export class CostTracker {
   private pricingCache: PricingCache = {};
   private pricingCachePath: string | null = null;
   private modelConfigs: Record<string, ModelConfig>;
-  private eventHandlers: Map<keyof LLMServiceEvent, Set<LLMServiceEventHandler<any>>> = new Map();
+  private eventHandlers: Map<keyof SilkboardEvent, Set<SilkboardEventHandler<any>>> = new Map();
 
   constructor(
     modelConfigs: Record<string, ModelConfig>,
@@ -191,9 +191,9 @@ export class CostTracker {
     this.usage = [];
   }
 
-  on<K extends keyof LLMServiceEvent>(
+  on<K extends keyof SilkboardEvent>(
     event: K,
-    handler: LLMServiceEventHandler<K>
+    handler: SilkboardEventHandler<K>
   ): void {
     if (!this.eventHandlers.has(event)) {
       this.eventHandlers.set(event, new Set());
@@ -201,16 +201,16 @@ export class CostTracker {
     this.eventHandlers.get(event)!.add(handler);
   }
 
-  off<K extends keyof LLMServiceEvent>(
+  off<K extends keyof SilkboardEvent>(
     event: K,
-    handler: LLMServiceEventHandler<K>
+    handler: SilkboardEventHandler<K>
   ): void {
     this.eventHandlers.get(event)?.delete(handler);
   }
 
-  private emit<K extends keyof LLMServiceEvent>(
+  private emit<K extends keyof SilkboardEvent>(
     event: K,
-    data: LLMServiceEvent[K]
+    data: SilkboardEvent[K]
   ): void {
     const handlers = this.eventHandlers.get(event);
     if (handlers) {

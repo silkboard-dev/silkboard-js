@@ -96,7 +96,7 @@ function buildBudgetReasoning(
 
   if (clampedBudget !== requestedBudget && requestedBudget > 0) {
     console.warn(
-      `[LLMService] OpenRouter reasoning budget clamped from ${requestedBudget} to ${clampedBudget} ` +
+      `[Silkboard] OpenRouter reasoning budget clamped from ${requestedBudget} to ${clampedBudget} ` +
         `(OpenRouter max: ${OPENROUTER_MAX})`
     );
   }

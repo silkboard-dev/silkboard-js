@@ -1,29 +1,30 @@
 import { streamText, generateText, embed, embedMany } from 'ai';
-import { ConfigLoader } from './config/loader';
-import { ModelRegistry } from './providers/registry';
+import { ConfigLoader } from './loaders';
+import { Registry } from './providers/registry';
 import { CostTracker } from './cost/tracker';
 import { addAnthropicCacheControl } from './caching/anthropic';
 import { voyageEmbed, voyageRerank, isVoyageAvailable } from './providers/adapters/voyage';
 import { cohereRerank, isCohereAvailable } from './providers/adapters/cohere';
 import type {
-  LLMServiceConfig,
-  TextRequestOptions,
-  EmbedRequestOptions,
-  RerankRequestOptions,
+  SilkboardConfig,
+  TextOptions,
+  EmbedOptions,
+  RerankOptions,
   RerankResult,
   UsageSummary,
   UsageRecord,
   ReasoningOverride,
-  LLMServiceEvent,
-  LLMServiceEventHandler,
+  SilkboardEvent,
+  SilkboardEventHandler,
 } from './types';
+import { SilkboardError } from './errors';
 
-export class LLMService {
+export class Silkboard {
   private configLoader: ConfigLoader;
-  private registry: ModelRegistry;
+  private registry: Registry;
   private costTracker: CostTracker;
 
-  constructor(config: LLMServiceConfig) {
+  constructor(config: SilkboardConfig) {
     this.configLoader = new ConfigLoader(config.environment);
 
     // Load models config
@@ -35,15 +36,15 @@ export class LLMService {
     }
 
     // Initialize registry and cost tracker
-    this.registry = new ModelRegistry(modelsConfig);
+    this.registry = new Registry(modelsConfig);
     this.costTracker = new CostTracker(
       modelsConfig.models,
       config.pricingCache
     );
   }
 
-  async streamText(options: TextRequestOptions): Promise<ReturnType<typeof streamText>> {
-    const { model, providerOptions, messages } = this.resolveRequest(options);
+  async streamText(options: TextOptions): Promise<ReturnType<typeof streamText>> {
+    const { model, providerOptions, messages } = await this.resolveRequest(options);
     const startTime = Date.now();
 
     const result = await streamText({
@@ -74,8 +75,8 @@ export class LLMService {
     return result;
   }
 
-  async generateText(options: TextRequestOptions): Promise<Awaited<ReturnType<typeof generateText>>> {
-    const { model, providerOptions, messages } = this.resolveRequest(options);
+  async generateText(options: TextOptions): Promise<Awaited<ReturnType<typeof generateText>>> {
+    const { model, providerOptions, messages } = await this.resolveRequest(options);
     const startTime = Date.now();
 
     const result = await generateText({
@@ -105,14 +106,14 @@ export class LLMService {
     return result;
   }
 
-  async embed(options: EmbedRequestOptions): Promise<{ embedding: number[]; embeddings: number[][] }> {
+  async embed(options: EmbedOptions): Promise<{ embedding: number[]; embeddings: number[][] }> {
     const modelAlias = this.resolveModelAlias(options);
     const config = this.registry.getModelConfig(modelAlias);
 
     // Use Voyage native SDK for Voyage models
     if (config.provider === 'voyage') {
       if (!isVoyageAvailable()) {
-        throw new Error('VOYAGE_API_KEY not configured');
+        throw SilkboardError.apiKeyMissing('voyage', 'VOYAGE_API_KEY');
       }
       
       const values = Array.isArray(options.value) ? options.value : [options.value];
@@ -125,7 +126,7 @@ export class LLMService {
     }
 
     // Use AI SDK for other providers
-    const { instance } = this.registry.getEmbeddingModel(modelAlias);
+    const { instance } = await this.registry.getEmbeddingModel(modelAlias);
 
     if (Array.isArray(options.value)) {
       const { embeddings } = await embedMany({
@@ -149,7 +150,7 @@ export class LLMService {
     };
   }
 
-  async rerank(options: RerankRequestOptions): Promise<RerankResult[]> {
+  async rerank(options: RerankOptions): Promise<RerankResult[]> {
     const modelAlias = this.resolveModelAlias(options);
     const config = this.registry.getModelConfig(modelAlias);
 
@@ -162,25 +163,25 @@ export class LLMService {
     try {
       if (config.provider === 'voyage') {
         if (!isVoyageAvailable()) {
-          throw new Error('VOYAGE_API_KEY not configured');
+          throw SilkboardError.apiKeyMissing('voyage', 'VOYAGE_API_KEY');
         }
         return await voyageRerank(options.query, validDocs, config, options.topN);
       }
 
       if (config.provider === 'cohere') {
         if (!isCohereAvailable()) {
-          throw new Error('COHERE_API_KEY not configured');
+          throw SilkboardError.apiKeyMissing('cohere', 'COHERE_API_KEY');
         }
         return await cohereRerank(options.query, validDocs, config, options.topN);
       }
 
-      throw new Error(`Reranking not supported for provider: ${config.provider}`);
+      throw SilkboardError.requestFailed(`Reranking not supported for provider: ${config.provider}`, new Error('Unsupported provider'));
     } catch (error) {
       // Try fallback if configured
       const fallbackAlias = this.getRoleFallback(options.role);
       if (fallbackAlias) {
         console.warn(
-          `[LLMService] Reranking failed with ${modelAlias}, trying fallback ${fallbackAlias}`
+          `[Silkboard] Reranking failed with ${modelAlias}, trying fallback ${fallbackAlias}`
         );
         return this.rerank({
           ...options,
@@ -192,11 +193,11 @@ export class LLMService {
     }
   }
 
-  private resolveRequest(options: TextRequestOptions) {
+  private async resolveRequest(options: TextOptions) {
     const modelAlias = this.resolveModelAlias(options);
     const overrides = this.resolveOverrides(options);
 
-    const model = this.registry.getLanguageModel(modelAlias, overrides?.reasoning);
+    const model = await this.registry.getLanguageModel(modelAlias, overrides?.reasoning);
 
     // Apply Anthropic cache control if applicable
     const messages = addAnthropicCacheControl(options.messages, model.config);
@@ -223,17 +224,17 @@ export class LLMService {
     if (options.role) {
       const rolesConfig = this.configLoader.getRolesConfig();
       if (!rolesConfig) {
-        throw new Error('Roles config not loaded');
+        throw SilkboardError.configNotLoaded('roles');
       }
 
       const resolved = this.configLoader.resolveRole(options.role, options.variant);
       return resolved.modelAlias;
     }
 
-    throw new Error('Either model or role must be specified');
+    throw SilkboardError.requestInvalid('Either model or role must be specified');
   }
 
-  private resolveOverrides(options: TextRequestOptions): {
+  private resolveOverrides(options: TextOptions): {
     reasoning?: ReasoningOverride;
     parameters?: { temperature?: number; max_tokens?: number };
   } | undefined {
@@ -282,16 +283,16 @@ export class LLMService {
   }
 
   // Event handling
-  on<K extends keyof LLMServiceEvent>(
+  on<K extends keyof SilkboardEvent>(
     event: K,
-    handler: LLMServiceEventHandler<K>
+    handler: SilkboardEventHandler<K>
   ): void {
     this.costTracker.on(event, handler);
   }
 
-  off<K extends keyof LLMServiceEvent>(
+  off<K extends keyof SilkboardEvent>(
     event: K,
-    handler: LLMServiceEventHandler<K>
+    handler: SilkboardEventHandler<K>
   ): void {
     this.costTracker.off(event, handler);
   }
@@ -306,15 +307,15 @@ export class LLMService {
   }
 
   // For advanced use cases - get the underlying model instance
-  getLanguageModel(alias: string, overrides?: ReasoningOverride) {
-    return this.registry.getLanguageModel(alias, overrides);
+  async getLanguageModel(alias: string, overrides?: ReasoningOverride) {
+    return await this.registry.getLanguageModel(alias, overrides);
   }
 
-  getEmbeddingModel(alias: string) {
-    return this.registry.getEmbeddingModel(alias);
+  async getEmbeddingModel(alias: string) {
+    return await this.registry.getEmbeddingModel(alias);
   }
 }
 
-export function createLLMService(config: LLMServiceConfig): LLMService {
-  return new LLMService(config);
+export function createSilkboard(config: SilkboardConfig): Silkboard {
+  return new Silkboard(config);
 }

@@ -1,72 +1,70 @@
 import type { ProviderType, ProviderConfig } from '../types';
+import { SilkboardError } from '../errors';
 
-type ProviderInstance = ReturnType<typeof createProviderInstance>;
+type ProviderInstance = any; // Provider instances are dynamic, using any for flexibility
 
 const providerCache = new Map<ProviderType, ProviderInstance>();
 
-export function getProvider(
+export async function getProvider(
   providerType: ProviderType,
   config?: ProviderConfig
-): ProviderInstance {
+): Promise<ProviderInstance> {
   // Return cached instance if available
   if (providerCache.has(providerType)) {
     return providerCache.get(providerType)!;
   }
 
-  const instance = createProviderInstance(providerType, config);
+  const instance = await createProviderInstance(providerType, config);
   providerCache.set(providerType, instance);
   return instance;
 }
 
-function createProviderInstance(providerType: ProviderType, config?: ProviderConfig) {
+async function createProviderInstance(providerType: ProviderType, config?: ProviderConfig): Promise<any> {
   const envKey = config?.env_key ?? getDefaultEnvKey(providerType);
   const apiKey = process.env[envKey];
 
   if (!apiKey && providerType !== 'voyage') {
-    throw new Error(
-      `API key not found for provider '${providerType}'. ` +
-        `Set the ${envKey} environment variable.`
-    );
+    throw SilkboardError.apiKeyMissing(providerType, envKey);
   }
 
   switch (providerType) {
     case 'openai': {
-      const { createOpenAI } = require('@ai-sdk/openai');
+      const { createOpenAI } = await import('@ai-sdk/openai');
       return createOpenAI({ apiKey });
     }
 
     case 'anthropic': {
-      const { createAnthropic } = require('@ai-sdk/anthropic');
+      const { createAnthropic } = await import('@ai-sdk/anthropic');
       return createAnthropic({ apiKey });
     }
 
     case 'google': {
-      const { createGoogleGenerativeAI } = require('@ai-sdk/google');
+      const { createGoogleGenerativeAI } = await import('@ai-sdk/google');
       return createGoogleGenerativeAI({ apiKey });
     }
 
     case 'groq': {
-      const { createGroq } = require('@ai-sdk/groq');
+      const { createGroq } = await import('@ai-sdk/groq');
       return createGroq({ apiKey });
     }
 
     case 'cerebras': {
-      const { createCerebras } = require('@ai-sdk/cerebras');
+      const { createCerebras } = await import('@ai-sdk/cerebras');
       return createCerebras({ apiKey });
     }
 
     case 'xai': {
-      const { createXai } = require('@ai-sdk/xai');
+      const { createXai } = await import('@ai-sdk/xai');
       return createXai({ apiKey });
     }
 
     case 'cohere': {
-      const { createCohere } = require('@ai-sdk/cohere');
+      const { createCohere } = await import('@ai-sdk/cohere');
       return createCohere({ apiKey });
     }
 
     case 'openrouter': {
-      const { createOpenAICompatible } = require('@ai-sdk/openai-compatible');
+      const { createOpenAICompatible } = await import('@ai-sdk/openai-compatible');
       return createOpenAICompatible({
         name: 'openrouter',
         apiKey,
@@ -86,7 +84,7 @@ function createProviderInstance(providerType: ProviderType, config?: ProviderCon
     }
 
     default:
-      throw new Error(`Unknown provider: ${providerType}`);
+      throw SilkboardError.internalError(`Unknown provider: ${providerType}`);
   }
 }
 

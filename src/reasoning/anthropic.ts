@@ -55,7 +55,7 @@ export function buildAnthropicProviderOptions(
 
   if (clampedBudget !== requestedBudget) {
     console.warn(
-      `[LLMService] Anthropic thinking budget clamped from ${requestedBudget} to ${clampedBudget} ` +
+      `[Silkboard] Anthropic thinking budget clamped from ${requestedBudget} to ${clampedBudget} ` +
         `(min: ${config.min}, max: ${config.max}, max_tokens: ${maxTokens})`
     );
   }

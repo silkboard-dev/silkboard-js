@@ -24,9 +24,13 @@ export interface GoogleProviderOptionsBudget {
 export type GoogleProviderOptions = GoogleProviderOptionsLevel | GoogleProviderOptionsBudget;
 
 export function buildGoogleProviderOptions(
-  config: ReasoningConfigLevel | ReasoningConfigBudget,
+  config: ReasoningConfigLevel | ReasoningConfigBudget | undefined,
   overrides?: ReasoningOverride
 ): GoogleProviderOptions {
+  if (!config) {
+    return {} as GoogleProviderOptions;
+  }
+  
   if (config.style === 'level') {
     return buildGoogleLevelOptions(config, overrides);
   }
@@ -42,7 +46,7 @@ function buildGoogleLevelOptions(
   // Validate level is in allowed values
   if (!config.values.includes(level)) {
     console.warn(
-      `[LLMService] Invalid thinking level '${level}', using default '${config.default}'`
+      `[Silkboard] Invalid thinking level '${level}', using default '${config.default}'`
     );
     return {
       google: {
@@ -95,7 +99,7 @@ function buildGoogleBudgetOptions(
 
   if (clampedBudget !== requestedBudget) {
     console.warn(
-      `[LLMService] Google thinking budget clamped from ${requestedBudget} to ${clampedBudget} ` +
+      `[Silkboard] Google thinking budget clamped from ${requestedBudget} to ${clampedBudget} ` +
         `(min: ${config.min}, max: ${config.max})`
     );
   }

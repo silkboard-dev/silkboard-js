@@ -1,70 +1,87 @@
 /**
  * Unit tests for OpenAI reasoning configuration builder
  */
-import { describe, it, expect } from 'vitest';
-import { buildOpenAIReasoningConfig } from '../../../src/reasoning/openai';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { buildOpenAIProviderOptions } from '../../../src/reasoning/openai';
 
 describe('OpenAI Reasoning', () => {
-  describe('buildOpenAIReasoningConfig', () => {
-    it('should return empty config when no reasoning config provided', () => {
-      const result = buildOpenAIReasoningConfig(undefined, undefined);
-      
-      expect(result).toEqual({});
+  describe('buildOpenAIProviderOptions', () => {
+    beforeEach(() => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
     });
 
     it('should use default effort when config has default but no override', () => {
       const config = {
         style: 'effort' as const,
-        values: ['low', 'medium', 'high'],
-        default: 'medium',
+        values: ['low', 'medium', 'high'] as ('low' | 'medium' | 'high')[],
+        default: 'medium' as const,
       };
-      
-      const result = buildOpenAIReasoningConfig(config, undefined);
-      
+
+      const result = buildOpenAIProviderOptions(config, undefined);
+
       expect(result).toEqual({
-        reasoningEffort: 'medium',
+        openai: {
+          reasoningEffort: 'medium',
+          reasoningSummary: 'auto',
+        },
       });
     });
 
     it('should use override effort when provided', () => {
       const config = {
         style: 'effort' as const,
-        values: ['low', 'medium', 'high'],
-        default: 'medium',
+        values: ['low', 'medium', 'high'] as ('low' | 'medium' | 'high')[],
+        default: 'medium' as const,
       };
       const override = { effort: 'high' as const };
-      
-      const result = buildOpenAIReasoningConfig(config, override);
-      
+
+      const result = buildOpenAIProviderOptions(config, override);
+
       expect(result).toEqual({
-        reasoningEffort: 'high',
+        openai: {
+          reasoningEffort: 'high',
+          reasoningSummary: 'auto',
+        },
       });
     });
 
-    it('should validate effort value against allowed values', () => {
+    it('should validate effort value against allowed values and fallback to default', () => {
       const config = {
         style: 'effort' as const,
-        values: ['low', 'medium', 'high'],
-        default: 'medium',
+        values: ['low', 'medium', 'high'] as ('low' | 'medium' | 'high')[],
+        default: 'medium' as const,
       };
       const override = { effort: 'invalid' as any };
-      
+
       // Should fall back to default when invalid
-      const result = buildOpenAIReasoningConfig(config, override);
-      
-      expect(result.reasoningEffort).toBe('medium');
+      const result = buildOpenAIProviderOptions(config, override);
+
+      expect(result.openai.reasoningEffort).toBe('medium');
+      expect(console.warn).toHaveBeenCalledWith(
+        '[Silkboard] Invalid reasoning effort \'invalid\', using default \'medium\''
+      );
     });
 
-    it('should handle missing default gracefully', () => {
+    it('should use low effort when specified', () => {
       const config = {
         style: 'effort' as const,
-        values: ['low', 'medium', 'high'],
+        values: ['low', 'medium', 'high'] as ('low' | 'medium' | 'high')[],
+        default: 'medium' as const,
       };
-      
-      const result = buildOpenAIReasoningConfig(config, undefined);
-      
-      // Should return empty or first valid value
-      expect(result).toBeDefined();
+      const override = { effort: 'low' as const };
+
+      const result = buildOpenAIProviderOptions(config, override);
+
+      expect(result).toEqual({
+        openai: {
+          reasoningEffort: 'low',
+          reasoningSummary: 'auto',
+        },
+      });
     });
   });
 });

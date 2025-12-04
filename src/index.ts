@@ -1,11 +1,11 @@
 // Main service
-export { LLMService, createLLMService } from './service';
+export { Silkboard, createSilkboard } from './service';
 
 // Configuration
-export { ConfigLoader, createConfigLoader } from './config/loader';
+export { ConfigLoader, createConfigLoader } from './loaders';
 
 // Provider registry
-export { ModelRegistry, createModelRegistry } from './providers/registry';
+export { Registry, createRegistry } from './providers/registry';
 export { getProvider, isProviderAvailable, clearProviderCache } from './providers/factory';
 
 // Adapters
@@ -37,6 +37,9 @@ export {
 
 // Cost tracking
 export { CostTracker, createCostTracker } from './cost/tracker';
+
+// Error handling
+export { SilkboardError, SilkboardErrorCode } from './errors';
 
 // Types
 export type {
@@ -80,7 +83,7 @@ export type {
   RolesConfigFile,
   
   // Service configuration
-  LLMServiceConfig,
+  SilkboardConfig,
   CacheStore,
   
   // Usage & cost tracking
@@ -89,9 +92,9 @@ export type {
   
   // Request options
   BaseRequestOptions,
-  TextRequestOptions,
-  EmbedRequestOptions,
-  RerankRequestOptions,
+  TextOptions,
+  EmbedOptions,
+  RerankOptions,
   
   // Results
   RerankResult,
@@ -100,6 +103,6 @@ export type {
   
   // Events
   UsageEvent,
-  LLMServiceEvent,
-  LLMServiceEventHandler,
+  SilkboardEvent,
+  SilkboardEventHandler,
 } from './types';

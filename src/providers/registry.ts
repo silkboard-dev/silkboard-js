@@ -13,10 +13,11 @@ import type {
 } from '../types';
 import { getProvider } from './factory';
 import { buildReasoningConfig } from '../reasoning';
+import { SilkboardError } from '../errors';
 
 type EmbeddingModelType = ReturnType<any['textEmbeddingModel']>;
 
-export class ModelRegistry {
+export class Registry {
   private modelsConfig: ModelsConfigFile;
   private languageModelCache = new Map<string, LanguageModel>();
   private embeddingModelCache = new Map<string, EmbeddingModelType>();
@@ -25,17 +26,17 @@ export class ModelRegistry {
     this.modelsConfig = config;
   }
 
-  getLanguageModel(
+  async getLanguageModel(
     alias: string,
     overrides?: ReasoningOverride
-  ): ResolvedModel {
+  ): Promise<ResolvedModel> {
     const config = this.modelsConfig.models[alias];
     if (!config) {
-      throw new Error(`Model not found: ${alias}`);
+      throw SilkboardError.modelNotFound(alias);
     }
 
     if (config.type !== 'language') {
-      throw new Error(`Model '${alias}' is not a language model (type: ${config.type})`);
+      throw SilkboardError.modelTypeMismatch(alias, 'language', config.type);
     }
 
     // Build reasoning configuration
@@ -46,7 +47,7 @@ export class ModelRegistry {
     let instance = this.languageModelCache.get(cacheKey);
 
     if (!instance) {
-      instance = this.createLanguageModel(config, providerOptions, extraBody);
+      instance = await this.createLanguageModel(config, providerOptions, extraBody);
       this.languageModelCache.set(cacheKey, instance);
     }
 
@@ -59,27 +60,27 @@ export class ModelRegistry {
     };
   }
 
-  getEmbeddingModel(alias: string): ResolvedEmbeddingModel {
+  async getEmbeddingModel(alias: string): Promise<ResolvedEmbeddingModel> {
     const config = this.modelsConfig.models[alias];
     if (!config) {
-      throw new Error(`Model not found: ${alias}`);
+      throw SilkboardError.modelNotFound(alias);
     }
 
     if (config.type !== 'embedding') {
-      throw new Error(`Model '${alias}' is not an embedding model (type: ${config.type})`);
+      throw SilkboardError.modelTypeMismatch(alias, 'embedding', config.type);
     }
 
     // Voyage uses native SDK
     if (config.provider === 'voyage') {
-      throw new Error(
-        `Voyage embedding models use native SDK. Use the VoyageAdapter instead.`
+      throw SilkboardError.requestInvalid(
+        'Voyage embedding models use native SDK. Use the VoyageAdapter instead.'
       );
     }
 
     let instance = this.embeddingModelCache.get(alias);
 
     if (!instance) {
-      instance = this.createEmbeddingModel(config);
+      instance = await this.createEmbeddingModel(config);
       this.embeddingModelCache.set(alias, instance);
     }
 
@@ -90,15 +91,15 @@ export class ModelRegistry {
     };
   }
 
-  private createLanguageModel(
+  private async createLanguageModel(
     config: ModelConfig,
     providerOptions: Record<string, unknown>,
     extraBody?: Record<string, unknown>
-  ): LanguageModel {
-    const provider = getProvider(config.provider);
+  ): Promise<LanguageModel> {
+    const provider = await getProvider(config.provider);
 
     if (!provider) {
-      throw new Error(`Provider '${config.provider}' not available`);
+      throw SilkboardError.providerNotAvailable(config.provider);
     }
 
     // Create base model with options for OpenRouter
@@ -125,11 +126,11 @@ export class ModelRegistry {
     return wrappedModel;
   }
 
-  private createEmbeddingModel(config: ModelConfig): EmbeddingModelType {
-    const provider = getProvider(config.provider);
+  private async createEmbeddingModel(config: ModelConfig): Promise<EmbeddingModelType> {
+    const provider = await getProvider(config.provider);
 
     if (!provider) {
-      throw new Error(`Provider '${config.provider}' not available`);
+      throw SilkboardError.providerNotAvailable(config.provider);
     }
 
     // OpenAI embedding model
@@ -146,22 +147,22 @@ export class ModelRegistry {
       return provider.textEmbeddingModel(config.model_id);
     }
 
-    throw new Error(
+    throw SilkboardError.requestInvalid(
       `Provider '${config.provider}' does not support embedding models`
     );
   }
 
-  buildCustomProvider() {
+  async buildCustomProvider() {
     const languageModels: Record<string, LanguageModel> = {};
 
     for (const [alias, config] of Object.entries(this.modelsConfig.models)) {
       if (config.type === 'language') {
         try {
-          const { instance } = this.getLanguageModel(alias);
+          const { instance } = await this.getLanguageModel(alias);
           languageModels[alias] = instance;
         } catch (error) {
           console.warn(
-            `[ModelRegistry] Failed to create model '${alias}':`,
+            `[Silkboard] Failed to create model '${alias}':`,
             (error as Error).message
           );
         }
@@ -177,7 +178,7 @@ export class ModelRegistry {
   getModelConfig(alias: string): ModelConfig {
     const config = this.modelsConfig.models[alias];
     if (!config) {
-      throw new Error(`Model not found: ${alias}`);
+      throw SilkboardError.modelNotFound(alias);
     }
     return config;
   }
@@ -194,6 +195,6 @@ export class ModelRegistry {
   }
 }
 
-export function createModelRegistry(config: ModelsConfigFile): ModelRegistry {
-  return new ModelRegistry(config);
+export function createRegistry(config: ModelsConfigFile): Registry {
+  return new Registry(config);
 }

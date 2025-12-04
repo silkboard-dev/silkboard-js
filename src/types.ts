@@ -200,7 +200,7 @@ export interface RolesConfigFile {
 // Service Configuration
 // =============================================================================
 
-export interface LLMServiceConfig {
+export interface SilkboardConfig {
   modelsConfig: string | ModelsConfigFile;
   rolesConfig?: string | RolesConfigFile;
   pricingCache?: string;
@@ -258,7 +258,7 @@ export interface BaseRequestOptions {
   abortSignal?: AbortSignal;
 }
 
-export interface TextRequestOptions extends BaseRequestOptions {
+export interface TextOptions extends BaseRequestOptions {
   messages: Array<{
     role: 'system' | 'user' | 'assistant';
     content: string;
@@ -267,11 +267,11 @@ export interface TextRequestOptions extends BaseRequestOptions {
   tools?: Record<string, unknown>;
 }
 
-export interface EmbedRequestOptions extends BaseRequestOptions {
+export interface EmbedOptions extends BaseRequestOptions {
   value: string | string[];
 }
 
-export interface RerankRequestOptions extends BaseRequestOptions {
+export interface RerankOptions extends BaseRequestOptions {
   query: string;
   documents: string[];
   topN?: number;
@@ -313,11 +313,11 @@ export interface UsageEvent extends Omit<UsageRecord, 'timestamp'> {
   timestamp: Date;
 }
 
-export type LLMServiceEvent = {
+export type SilkboardEvent = {
   usage: UsageEvent;
   error: { model: string; error: Error };
 };
 
-export type LLMServiceEventHandler<K extends keyof LLMServiceEvent> = (
-  event: LLMServiceEvent[K]
+export type SilkboardEventHandler<K extends keyof SilkboardEvent> = (
+  event: SilkboardEvent[K]
 ) => void;

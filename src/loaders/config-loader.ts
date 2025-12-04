@@ -10,6 +10,7 @@ import type {
   RoleWithFallback,
   RoleWithVariants,
 } from '../types';
+import { SilkboardError } from '../errors';
 
 import modelsSchema from '../../config/models.schema.json';
 import rolesSchema from '../../config/roles.schema.json';
@@ -33,7 +34,7 @@ export class ConfigLoader {
 
     if (typeof configPathOrObject === 'string') {
       if (!existsSync(configPathOrObject)) {
-        throw new Error(`Models config file not found: ${configPathOrObject}`);
+        throw SilkboardError.configNotFound(configPathOrObject);
       }
       const content = readFileSync(configPathOrObject, 'utf-8');
       config = parseYaml(content) as ModelsConfigFile;
@@ -45,7 +46,7 @@ export class ConfigLoader {
       const errors = validateModels.errors
         ?.map((e) => `${e.instancePath}: ${e.message}`)
         .join('\n');
-      throw new Error(`Invalid models configuration:\n${errors}`);
+      throw SilkboardError.configInvalid(errors);
     }
 
     this.modelsConfig = config;
@@ -57,7 +58,7 @@ export class ConfigLoader {
 
     if (typeof configPathOrObject === 'string') {
       if (!existsSync(configPathOrObject)) {
-        throw new Error(`Roles config file not found: ${configPathOrObject}`);
+        throw SilkboardError.configNotFound(configPathOrObject);
       }
       const content = readFileSync(configPathOrObject, 'utf-8');
       config = parseYaml(content) as RolesConfigFile;
@@ -69,7 +70,7 @@ export class ConfigLoader {
       const errors = validateRoles.errors
         ?.map((e) => `${e.instancePath}: ${e.message}`)
         .join('\n');
-      throw new Error(`Invalid roles configuration:\n${errors}`);
+      throw SilkboardError.configInvalid(errors);
     }
 
     this.rolesConfig = config;
@@ -78,7 +79,7 @@ export class ConfigLoader {
 
   getModelsConfig(): ModelsConfigFile {
     if (!this.modelsConfig) {
-      throw new Error('Models config not loaded');
+      throw SilkboardError.configNotLoaded('models');
     }
     return this.modelsConfig;
   }
@@ -91,7 +92,7 @@ export class ConfigLoader {
     const config = this.getModelsConfig();
     const model = config.models[alias];
     if (!model) {
-      throw new Error(`Model not found: ${alias}`);
+      throw SilkboardError.modelNotFound(alias);
     }
     return model;
   }
@@ -109,12 +110,12 @@ export class ConfigLoader {
 
   resolveRole(roleName: string, variant?: string): { modelAlias: string; overrides?: SimpleRoleConfig['overrides'] } {
     if (!this.rolesConfig) {
-      throw new Error('Roles config not loaded');
+      throw SilkboardError.configNotLoaded('roles');
     }
 
     let roleConfig = this.rolesConfig.roles[roleName];
     if (!roleConfig) {
-      throw new Error(`Role not found: ${roleName}`);
+      throw SilkboardError.roleNotFound(roleName);
     }
 
     // Apply environment overrides if present
@@ -140,11 +141,11 @@ export class ConfigLoader {
 
     if (this.isRoleWithVariants(roleConfig)) {
       if (!variant) {
-        throw new Error(`Role '${roleName}' has variants. Please specify a variant.`);
+        throw SilkboardError.roleRequiresVariant(roleName);
       }
       const variantConfig = roleConfig[variant];
       if (!variantConfig) {
-        throw new Error(`Variant '${variant}' not found for role '${roleName}'`);
+        throw SilkboardError.variantNotFound(roleName, variant);
       }
       return {
         modelAlias: variantConfig.model,
@@ -152,7 +153,7 @@ export class ConfigLoader {
       };
     }
 
-    throw new Error(`Invalid role configuration for '${roleName}'`);
+    throw SilkboardError.configInvalid(`Invalid role configuration for '${roleName}'`);
   }
 
   getRoleFallback(roleName: string): string | null {

@@ -16,7 +16,7 @@ export function buildOpenAIProviderOptions(
   // Validate effort level is in allowed values
   if (!config.values.includes(effort)) {
     console.warn(
-      `[LLMService] Invalid reasoning effort '${effort}', using default '${config.default}'`
+      `[Silkboard] Invalid reasoning effort '${effort}', using default '${config.default}'`
     );
     return {
       openai: {

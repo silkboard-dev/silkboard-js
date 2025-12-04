@@ -47,3 +47,5 @@ config/roles.yaml
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
+model_prices_and_context_window.json
+.claude/agents/web-research-specialist.md
