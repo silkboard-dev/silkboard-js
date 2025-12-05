@@ -6,6 +6,8 @@ import { addAnthropicCacheControl } from './caching/anthropic';
 import { voyageEmbed, voyageRerank, isVoyageAvailable } from './providers/adapters/voyage';
 import { cohereRerank, isCohereAvailable } from './providers/adapters/cohere';
 import { SilkboardEventEmitter, generateRequestId } from './events';
+import { Router } from './router';
+import { ProviderRegistry } from './registry';
 import type {
   SilkboardConfig,
   TextOptions,
@@ -18,6 +20,8 @@ import type {
   SilkboardEvent,
   SilkboardEventHandler,
   ResolvedModel,
+  RoutingConfig,
+  RouterContext,
 } from './types';
 import { SilkboardError } from './errors';
 
@@ -26,10 +30,14 @@ export class Silkboard {
   private registry: Registry;
   private costTracker: CostTracker;
   private eventEmitter: SilkboardEventEmitter;
+  private router: Router | null = null;
+  private providerRegistry: ProviderRegistry | null = null;
+  private emitStreamEvents: boolean;
 
   constructor(config: SilkboardConfig) {
     this.configLoader = new ConfigLoader(config.environment);
     this.eventEmitter = new SilkboardEventEmitter();
+    this.emitStreamEvents = config.emitStreamEvents ?? false;
 
     // Load models config
     const modelsConfig = this.configLoader.loadModelsConfig(config.modelsConfig);
@@ -39,19 +47,61 @@ export class Silkboard {
       this.configLoader.loadRolesConfig(config.rolesConfig);
     }
 
+    // Initialize provider registry if path provided
+    if (config.registryPath) {
+      this.providerRegistry = new ProviderRegistry({
+        registryPath: config.registryPath,
+        preload: true,
+      });
+    }
+
     // Initialize registry and cost tracker
     this.registry = new Registry(modelsConfig);
-    this.costTracker = new CostTracker(
-      modelsConfig.models,
-      config.pricingCache,
-      this.eventEmitter
-    );
+    this.costTracker = new CostTracker({
+      modelConfigs: modelsConfig.models,
+      pricingCachePath: config.pricingCache,
+      eventEmitter: this.eventEmitter,
+      registry: this.providerRegistry ?? undefined,
+    });
+
+    // Initialize router if routing config provided
+    if (config.routingConfig) {
+      const routingConfig = this.loadRoutingConfig(config.routingConfig);
+      this.router = new Router({
+        config: routingConfig,
+        eventEmitter: this.eventEmitter,
+        roleResolver: (role: string, variant?: string) => {
+          const resolved = this.configLoader.resolveRole(role, variant);
+          return resolved.modelAlias;
+        },
+      });
+    }
+  }
+
+  private loadRoutingConfig(configPathOrObject: string | RoutingConfig): RoutingConfig {
+    if (typeof configPathOrObject === 'string') {
+      const { readFileSync, existsSync } = require('fs');
+      const { parse: parseYaml } = require('yaml');
+      
+      if (!existsSync(configPathOrObject)) {
+        throw SilkboardError.configNotFound(configPathOrObject);
+      }
+      const content = readFileSync(configPathOrObject, 'utf-8');
+      const ext = configPathOrObject.toLowerCase().split('.').pop();
+      
+      if (ext === 'json') {
+        return JSON.parse(content);
+      }
+      return parseYaml(content);
+    }
+    return configPathOrObject;
   }
 
   async streamText(options: TextOptions): Promise<ReturnType<typeof streamText>> {
     const { model, providerOptions, messages } = await this.resolveRequest(options);
     const requestId = generateRequestId();
     const startTime = Date.now();
+    let chunkIndex = 0;
 
     // Emit start event
     this.emitStartEvent(requestId, model, options);
@@ -67,6 +117,19 @@ export class Silkboard {
           ...model.providerOptions,
           ...providerOptions,
         } as any,
+        onChunk: this.emitStreamEvents ? ({ chunk }) => {
+          // Emit stream event for each text chunk
+          if (chunk.type === 'text-delta') {
+            this.eventEmitter.emit('stream', {
+              requestId,
+              model: model.alias,
+              provider: model.config.provider,
+              chunk: (chunk as any).text ?? (chunk as any).textDelta ?? '',
+              chunkIndex: chunkIndex++,
+              timestamp: new Date(),
+            });
+          }
+        } : undefined,
         onFinish: async ({ usage }) => {
           const usageAny = usage as any;
           const latencyMs = Date.now() - startTime;
@@ -76,6 +139,9 @@ export class Silkboard {
             cachedTokens: usageAny.cachedTokens,
             reasoningTokens: usageAny.reasoningTokens,
           };
+
+          // Record success for router health tracking
+          this.router?.recordSuccess(model.alias, latencyMs);
 
           // Track cost (also emits usage event)
           await this.costTracker.track({
@@ -93,6 +159,9 @@ export class Silkboard {
 
       return result;
     } catch (error) {
+      // Record failure for router health tracking
+      this.router?.recordFailure(model.alias, error as Error);
+      
       // Emit error event
       this.emitErrorEvent(requestId, model, error as Error, false);
       throw error;
@@ -129,6 +198,9 @@ export class Silkboard {
         reasoningTokens: usageAny.reasoningTokens,
       };
 
+      // Record success for router health tracking
+      this.router?.recordSuccess(model.alias, latencyMs);
+
       // Track cost (also emits usage event)
       await this.costTracker.track({
         model: model.alias,
@@ -143,6 +215,9 @@ export class Silkboard {
 
       return result;
     } catch (error) {
+      // Record failure for router health tracking
+      this.router?.recordFailure(model.alias, error as Error);
+      
       // Emit error event
       this.emitErrorEvent(requestId, model, error as Error, false);
       throw error;
@@ -259,7 +334,21 @@ export class Silkboard {
     return { model, providerOptions, messages };
   }
 
-  private resolveModelAlias(options: { model?: string; role?: string; variant?: string }): string {
+  private resolveModelAlias(options: { model?: string; role?: string; variant?: string; metadata?: Record<string, unknown> }): string {
+    // If router is configured, use it for model selection
+    if (this.router) {
+      const context: RouterContext = {
+        requestId: generateRequestId(),
+        model: options.model,
+        role: options.role,
+        variant: options.variant,
+        metadata: options.metadata,
+      };
+      const result = this.router.route(context);
+      return result.model;
+    }
+
+    // Fallback to direct resolution
     if (options.model) {
       return options.model;
     }
@@ -398,6 +487,21 @@ export class Silkboard {
     });
   }
 
+  // Cost estimation
+  /**
+   * Estimate cost before making a request.
+   * Useful for budget checks and cost projections.
+   */
+  async estimateCost(params: {
+    model: string;
+    inputTokens: number;
+    outputTokens?: number;
+    cachedTokens?: number;
+    reasoningTokens?: number;
+  }): Promise<number> {
+    return this.costTracker.estimateCost(params);
+  }
+
   // Utility methods
   listModels(type?: 'language' | 'embedding' | 'reranker'): string[] {
     return this.registry.listModels(type);
@@ -414,6 +518,23 @@ export class Silkboard {
 
   async getEmbeddingModel(alias: string) {
     return await this.registry.getEmbeddingModel(alias);
+  }
+
+  // Router access
+  /**
+   * Get the router instance for advanced routing control.
+   * Returns null if no routing config was provided.
+   */
+  getRouter(): Router | null {
+    return this.router;
+  }
+
+  /**
+   * Get the provider registry for metadata lookups.
+   * Returns null if no registry path was provided.
+   */
+  getProviderRegistry(): ProviderRegistry | null {
+    return this.providerRegistry;
   }
 }
 

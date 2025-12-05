@@ -21,6 +21,8 @@ export interface BaseRequestOptions {
   reasoning?: ReasoningOverride;
   parameters?: Partial<ModelParameters>;
   abortSignal?: AbortSignal;
+  /** Metadata for conditional routing */
+  metadata?: Record<string, unknown>;
 }
 
 /** Options for text generation (streamText, generateText) */
@@ -187,6 +189,25 @@ export interface CacheMissEvent {
   timestamp: Date;
 }
 
+/** Event emitted when a deployment enters cooldown */
+export interface CooldownEvent {
+  model: string;
+  reason: string;
+  cooldownUntil: Date;
+  consecutiveFailures: number;
+  timestamp: Date;
+}
+
+/** Event emitted for each streaming chunk */
+export interface StreamEvent {
+  requestId: string;
+  model: string;
+  provider: string;
+  chunk: string;
+  chunkIndex: number;
+  timestamp: Date;
+}
+
 /** Event types emitted by Silkboard */
 export interface SilkboardEvent {
   /** Emitted after request completes with usage data */
@@ -205,6 +226,10 @@ export interface SilkboardEvent {
   cacheHit: CacheHitEvent;
   /** Emitted on cache miss */
   cacheMiss: CacheMissEvent;
+  /** Emitted when a deployment enters cooldown */
+  cooldown: CooldownEvent;
+  /** Emitted for each streaming chunk */
+  stream: StreamEvent;
   /** Emitted when budget alert threshold is reached */
   budgetAlert: import('./budget').BudgetAlertEvent;
   /** Emitted when budget is exceeded */

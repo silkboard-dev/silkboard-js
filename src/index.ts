@@ -42,6 +42,55 @@ export { ConfigLoader, createConfigLoader } from './loaders';
 export { Registry, createRegistry } from './providers/registry';
 
 /**
+ * Provider metadata registry for loading provider/model metadata from YAML files.
+ * @see {@link ProviderRegistry} for metadata lookups
+ * @see {@link RegistryLoader} for loading YAML files
+ * 
+ * @example
+ * ```typescript
+ * import { ProviderRegistry } from 'silkboard';
+ * 
+ * const registry = new ProviderRegistry({ registryPath: './registry' });
+ * 
+ * // Get model pricing
+ * const pricing = registry.getPricing('gpt-4o');
+ * 
+ * // Find models with specific capabilities
+ * const models = registry.findModelsByFeature('web_search');
+ * ```
+ */
+export {
+  ProviderRegistry,
+  createRegistry as createProviderRegistry,
+  RegistryLoader,
+} from './registry';
+
+/**
+ * Router for model selection and routing strategies.
+ * @see {@link Router} for routing logic
+ * @see {@link StrategyRouter} for strategy implementations
+ * 
+ * @example
+ * ```typescript
+ * import { Router } from 'silkboard';
+ * 
+ * const router = new Router({
+ *   config: {
+ *     mode: 'strategy',
+ *     strategy: 'lowest-latency',
+ *     deployments: [
+ *       { model: 'gpt-4o', weight: 1 },
+ *       { model: 'claude-sonnet-4', weight: 1 },
+ *     ],
+ *   },
+ * });
+ * 
+ * const result = router.route({ requestId: 'req-123' });
+ * ```
+ */
+export { Router, createRouter, StrategyRouter } from './router';
+
+/**
  * Provider factory functions for lazy initialization.
  */
 export { getProvider, isProviderAvailable, clearProviderCache } from './providers/factory';
@@ -93,7 +142,7 @@ export {
  * Cost tracking for monitoring LLM usage and spending.
  * @see {@link CostTracker} for usage tracking and cost calculation
  */
-export { CostTracker, createCostTracker } from './cost/tracker';
+export { CostTracker, createCostTracker, type ProviderDiscount } from './cost/tracker';
 
 /**
  * Event system for observability and lifecycle hooks.
@@ -270,8 +319,27 @@ export type {
   FallbackEvent,
   CacheHitEvent,
   CacheMissEvent,
+  CooldownEvent,
+  StreamEvent,
   SilkboardEvent,
   SilkboardEventHandler,
+  
+  // Router types
+  RoutingMode,
+  RoutingStrategy,
+  RoutingConfig,
+  NoneRoutingConfig,
+  RoleBasedRoutingConfig,
+  StrategyRoutingConfig,
+  ConditionalRoutingConfig,
+  Deployment,
+  DeploymentHealth,
+  FallbackConfig,
+  CooldownConfig,
+  RetryConfig,
+  RoutingCondition,
+  RouterContext,
+  RoutingResult,
   
   // Budget types
   BudgetDuration,
@@ -287,4 +355,25 @@ export type {
   VaultService,
   VaultConfig,
   SecretResult,
+  
+  // Registry types
+  ProviderCategory,
+  ApiFormat,
+  AuthConfig,
+  ProviderMetadata,
+  RegistryModelType,
+  ModelStatus,
+  BillingUnit,
+  ContextWindow,
+  Modalities,
+  RegistryPricing,
+  ModelCapabilities,
+  ModelFeatures,
+  RegistryReasoningConfig,
+  RegistryCachingConfig,
+  RateLimits,
+  Quantization,
+  ModelMetadata,
+  ProviderMetadataFile,
+  RegistryLookupResult,
 } from './types';

@@ -1,0 +1,173 @@
+# Routing Configuration Examples
+# This file shows different routing modes and configurations
+
+# =============================================================================
+# Mode 1: None (Default - Pass-through)
+# =============================================================================
+# No routing logic. Model must be specified directly in each request.
+# Use this when you want full control over model selection.
+
+# routing:
+#   mode: none
+
+# =============================================================================
+# Mode 2: Role-Based Routing
+# =============================================================================
+# Routes based on role/variant configuration from roles.yaml.
+# This is the existing behavior - roles map to specific models.
+
+# routing:
+#   mode: role-based
+#   defaultModel: gpt-4o-mini  # Used when no role specified
+
+# =============================================================================
+# Mode 3: Strategy-Based Routing
+# =============================================================================
+# Algorithmic routing across multiple deployments.
+# Supports load balancing, failover, and health tracking.
+
+routing:
+  mode: strategy
+  
+  # Available strategies:
+  # - simple-shuffle: Weighted random selection
+  # - round-robin: Sequential rotation
+  # - lowest-latency: Route to fastest (tracks average latency)
+  # - lowest-cost: Route to cheapest (requires cost tracking)
+  # - least-busy: Route to least loaded (tracks request count)
+  strategy: lowest-latency
+  
+  # Deployments to route between
+  deployments:
+    - model: gpt-4o
+      weight: 2          # Higher weight = more traffic
+      enabled: true
+      tags: [openai, fast]
+      
+    - model: claude-sonnet-4
+      weight: 1
+      enabled: true
+      tags: [anthropic, balanced]
+      
+    - model: gemini-2.0-flash
+      weight: 1
+      enabled: true
+      tags: [google, fast]
+  
+  # Fallback chains when a model fails
+  fallbacks:
+    - from: gpt-4o
+      to: [claude-sonnet-4, gemini-2.0-flash]
+    - from: claude-sonnet-4
+      to: [gpt-4o, gemini-2.0-flash]
+    - from: gemini-2.0-flash
+      to: [gpt-4o, claude-sonnet-4]
+  
+  # Cooldown configuration for failed deployments
+  cooldown:
+    failureThreshold: 3    # Enter cooldown after 3 consecutive failures
+    cooldownSeconds: 60    # Stay in cooldown for 60 seconds
+  
+  # Retry configuration
+  retry:
+    maxRetries: 3
+    initialDelayMs: 1000
+    maxDelayMs: 30000
+    backoffMultiplier: 2
+    retryableErrors:
+      - RATE_LIMIT
+      - TIMEOUT
+      - SERVICE_UNAVAILABLE
+      - "429"
+      - "500"
+      - "502"
+      - "503"
+      - "504"
+
+# =============================================================================
+# Mode 4: Conditional Routing
+# =============================================================================
+# Route based on request metadata (user tier, region, etc.)
+# Useful for A/B testing, tiered access, or regional routing.
+
+# routing:
+#   mode: conditional
+#   
+#   # Conditions are evaluated in order - first match wins
+#   conditions:
+#     # Premium users get the best model
+#     - when:
+#         metadata.user_tier: premium
+#       then:
+#         model: gpt-4o
+#     
+#     # Enterprise users get Claude
+#     - when:
+#         metadata.user_tier: enterprise
+#       then:
+#         model: claude-sonnet-4
+#     
+#     # Free users get the mini model
+#     - when:
+#         metadata.user_tier: free
+#       then:
+#         model: gpt-4o-mini
+#     
+#     # A/B test: 50% of users in experiment group
+#     - when:
+#         metadata.experiment_group: treatment
+#       then:
+#         model: claude-sonnet-4
+#   
+#   # Default when no condition matches
+#   default:
+#     model: gpt-4o-mini
+#   
+#   # Fallbacks still work with conditional routing
+#   fallbacks:
+#     - from: gpt-4o
+#       to: [claude-sonnet-4, gpt-4o-mini]
+#   
+#   retry:
+#     maxRetries: 2
+#     initialDelayMs: 500
+
+# =============================================================================
+# Usage Examples
+# =============================================================================
+#
+# Mode: none
+# ```typescript
+# await silk.generateText({
+#   model: 'gpt-4o',  // Must specify model
+#   messages: [...]
+# });
+# ```
+#
+# Mode: role-based
+# ```typescript
+# await silk.generateText({
+#   role: 'answer',
+#   variant: 'fast',  // Optional
+#   messages: [...]
+# });
+# ```
+#
+# Mode: strategy
+# ```typescript
+# // Router automatically selects based on strategy
+# await silk.generateText({
+#   messages: [...]
+# });
+# ```
+#
+# Mode: conditional
+# ```typescript
+# await silk.generateText({
+#   messages: [...],
+#   metadata: {
+#     user_tier: 'premium',
+#     experiment_group: 'control'
+#   }
+# });
+# ```

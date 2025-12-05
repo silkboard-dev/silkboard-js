@@ -21,6 +21,8 @@
     "dev": "tsup --watch",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:unit": "vitest run --exclude tests/e2e/**",
+    "test:e2e": "vitest run tests/e2e/",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "clean": "rimraf dist"

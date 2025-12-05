@@ -1,3 +1,12 @@
+/**
+ * Reasoning Module
+ * 
+ * Provides unified reasoning configuration that maps to AI SDK's
+ * provider-specific providerOptions. We translate, not duplicate.
+ * 
+ * @see mapper.ts for the unified mapping logic
+ */
+
 import type {
   ModelConfig,
   ReasoningOverride,
@@ -6,16 +15,27 @@ import type {
   ReasoningConfigBudget,
   ReasoningConfigLevel,
 } from '../types';
-import { buildOpenAIProviderOptions } from './openai';
-import { buildAnthropicProviderOptions } from './anthropic';
-import { buildGoogleProviderOptions } from './google';
-import { buildOpenRouterExtraBody } from './openrouter';
+import { 
+  mapReasoningToProviderOptions, 
+  type ReasoningMapperConfig,
+} from './mapper';
 
 export interface ReasoningBuildResult {
   providerOptions: Record<string, any>;
   extraBody?: Record<string, any>;
 }
 
+/**
+ * Build reasoning configuration for a model.
+ * 
+ * This function uses the new unified mapper for all providers.
+ * It extracts the necessary config from ModelConfig and delegates
+ * to mapReasoningToProviderOptions.
+ * 
+ * @param config - Model configuration
+ * @param overrides - User's runtime reasoning override
+ * @returns Provider options and extra body for AI SDK
+ */
 export function buildReasoningConfig(
   config: ModelConfig,
   overrides?: ReasoningOverride
@@ -26,50 +46,34 @@ export function buildReasoningConfig(
     return { providerOptions: {} };
   }
 
-  switch (config.provider) {
-    case 'openai':
-      return {
-        providerOptions: buildOpenAIProviderOptions(
-          reasoning as ReasoningConfigEffort,
-          overrides
-        ),
-      };
+  // Build mapper config from model config
+  const mapperConfig: ReasoningMapperConfig = {
+    reasoning,
+    defaultEffort: reasoning.style === 'effort' 
+      ? (reasoning as ReasoningConfigEffort).default 
+      : undefined,
+    defaultBudget: reasoning.style === 'budget' 
+      ? (reasoning as ReasoningConfigBudget).default 
+      : undefined,
+    defaultLevel: reasoning.style === 'level' 
+      ? (reasoning as ReasoningConfigLevel).default 
+      : undefined,
+    defaultEnabled: 'default' in reasoning && typeof reasoning.default === 'boolean'
+      ? reasoning.default
+      : true,
+  };
 
-    case 'anthropic':
-      return {
-        providerOptions: buildAnthropicProviderOptions(
-          reasoning as ReasoningConfigBudget,
-          config.parameters?.max_tokens ?? 64000,
-          overrides
-        ),
-      };
+  // Use the unified mapper
+  const mapped = mapReasoningToProviderOptions(
+    config.provider,
+    mapperConfig,
+    overrides
+  );
 
-    case 'google':
-      return {
-        providerOptions: buildGoogleProviderOptions(
-          reasoning as ReasoningConfigLevel | ReasoningConfigBudget,
-          overrides
-        ),
-      };
-
-    case 'openrouter':
-      return {
-        providerOptions: {},
-        extraBody: buildOpenRouterExtraBody(config, overrides),
-      };
-
-    case 'xai':
-      // xAI Grok uses effort-based reasoning similar to OpenAI
-      return {
-        providerOptions: buildOpenAIProviderOptions(
-          reasoning as ReasoningConfigEffort,
-          overrides
-        ),
-      };
-
-    default:
-      return { providerOptions: {} };
-  }
+  return {
+    providerOptions: mapped.providerOptions ?? {},
+    extraBody: mapped.extraBody,
+  };
 }
 
 export function mergeReasoningOverride(
@@ -99,6 +103,10 @@ export function mergeReasoningOverride(
       };
 
     case 'toggle':
+    case 'toggle_budget':
+    case 'hybrid':
+    case 'interleaved':
+    case 'transparent':
       return {
         ...base,
         default: override.enabled ?? base.default,
@@ -109,6 +117,10 @@ export function mergeReasoningOverride(
   }
 }
 
+// Re-export the unified mapper
+export { mapReasoningToProviderOptions, type ReasoningMapperConfig } from './mapper';
+
+// Legacy exports for backward compatibility
 export { buildOpenAIProviderOptions } from './openai';
 export { buildAnthropicProviderOptions } from './anthropic';
 export { buildGoogleProviderOptions } from './google';

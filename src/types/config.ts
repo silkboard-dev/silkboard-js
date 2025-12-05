@@ -24,6 +24,14 @@ export interface CachingConfig {
 // Pricing Configuration
 // =============================================================================
 
+/** Pricing tier for context-based pricing (e.g., different prices above 200K tokens) */
+export interface PricingTierConfig {
+  up_to: number | 'unlimited';
+  input: number;
+  output?: number;
+  cached?: number;
+}
+
 /** Pricing per 1M tokens */
 export interface PricingConfig {
   input: number;
@@ -31,6 +39,9 @@ export interface PricingConfig {
   cached?: number;
   reasoning?: number;
   per_search?: number; // For rerankers with per-search pricing
+  
+  /** Context-based tiered pricing (e.g., Sonnet 4.5: different prices above 200K) */
+  tiered?: PricingTierConfig[];
 }
 
 // =============================================================================
@@ -124,7 +135,12 @@ export interface CacheStore {
 export interface SilkboardConfig {
   modelsConfig: string | ModelsConfigFile;
   rolesConfig?: string | RolesConfigFile;
+  routingConfig?: string | import('./router').RoutingConfig;
   pricingCache?: string;
   cacheStore?: CacheStore;
   environment?: string;
+  /** Path to provider registry directory for pricing lookups */
+  registryPath?: string;
+  /** Enable stream events (emits 'stream' event for each chunk) */
+  emitStreamEvents?: boolean;
 }

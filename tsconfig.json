@@ -12,7 +12,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noUnusedLocals": true,
@@ -22,9 +22,10 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@registry/*": ["./registry/*"]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "include": ["src/**/*", "registry/**/*"],
+  "exclude": ["node_modules", "dist", "tests", "registry/official", "registry/third-party", "registry/cloud", "registry/gateways", "**/_deprecated/**"]
 }

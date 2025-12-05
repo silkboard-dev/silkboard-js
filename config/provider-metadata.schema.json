@@ -1,0 +1,755 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://silkboard.dev/schemas/provider-metadata.schema.json",
+  "title": "Provider Metadata Schema",
+  "description": "Schema for provider metadata YAML files in the registry",
+  "type": "object",
+  "required": ["provider", "version", "models"],
+  "properties": {
+    "provider": {
+      "$ref": "#/definitions/ProviderMetadata"
+    },
+    "version": {
+      "type": "string",
+      "description": "Schema version (semver)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "last_updated": {
+      "type": "string",
+      "description": "Last update date (ISO 8601)",
+      "format": "date"
+    },
+    "defaults": {
+      "$ref": "#/definitions/ProviderDefaults"
+    },
+    "rate_limit_tiers": {
+      "type": "object",
+      "description": "Rate limit tiers by tier ID",
+      "additionalProperties": {
+        "$ref": "#/definitions/RateLimitTier"
+      }
+    },
+    "models": {
+      "type": "object",
+      "description": "Models by model ID",
+      "additionalProperties": {
+        "$ref": "#/definitions/ModelMetadata"
+      }
+    }
+  },
+  "definitions": {
+    "ProviderMetadata": {
+      "type": "object",
+      "required": ["id", "name", "category"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique provider identifier (lowercase, hyphenated)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["official", "third-party", "cloud", "gateway"],
+          "description": "Provider category"
+        },
+        "api_format": {
+          "$ref": "#/definitions/ApiFormat"
+        },
+        "base_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Base API URL"
+        },
+        "docs_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Documentation URL"
+        },
+        "pricing_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Pricing page URL"
+        },
+        "status_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Status page URL"
+        },
+        "auth": {
+          "$ref": "#/definitions/AuthConfig"
+        },
+        "supported_regions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Supported regions (for cloud providers)"
+        }
+      }
+    },
+    "ApiFormat": {
+      "type": "string",
+      "enum": [
+        "openai-completions",
+        "openai-responses",
+        "anthropic-messages",
+        "google-gemini",
+        "cohere",
+        "bedrock",
+        "vertex",
+        "azure",
+        "custom"
+      ],
+      "description": "API endpoint format"
+    },
+    "AuthConfig": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["api_key", "bearer", "oauth", "iam", "service_account"],
+          "description": "Authentication type"
+        },
+        "header": {
+          "type": "string",
+          "description": "HTTP header name"
+        },
+        "prefix": {
+          "type": "string",
+          "description": "Header value prefix (e.g., 'Bearer ')"
+        },
+        "env_var": {
+          "type": "string",
+          "description": "Environment variable name for the key"
+        }
+      }
+    },
+    "ProviderDefaults": {
+      "type": "object",
+      "properties": {
+        "billing_unit": {
+          "type": "string",
+          "enum": ["token", "character", "request", "second", "image"],
+          "description": "Default billing unit"
+        },
+        "currency": {
+          "type": "string",
+          "default": "USD",
+          "description": "Currency for pricing"
+        },
+        "rate_unit": {
+          "type": "number",
+          "default": 1000000,
+          "description": "Rate unit (e.g., 1000000 for per-million pricing)"
+        },
+        "api_format": {
+          "$ref": "#/definitions/ApiFormat"
+        }
+      }
+    },
+    "RateLimitTier": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Tier display name"
+        },
+        "qualification": {
+          "type": "string",
+          "description": "How to qualify for this tier"
+        },
+        "usage_limit_usd": {
+          "type": "number",
+          "description": "Monthly usage limit in USD"
+        },
+        "limits": {
+          "$ref": "#/definitions/RateLimits"
+        }
+      }
+    },
+    "RateLimits": {
+      "type": "object",
+      "properties": {
+        "rpm": {
+          "type": "integer",
+          "description": "Requests per minute"
+        },
+        "rpd": {
+          "type": "integer",
+          "description": "Requests per day"
+        },
+        "tpm": {
+          "type": "integer",
+          "description": "Tokens per minute"
+        },
+        "tpd": {
+          "type": "integer",
+          "description": "Tokens per day"
+        },
+        "ipm": {
+          "type": "integer",
+          "description": "Images per minute"
+        },
+        "concurrent": {
+          "type": "integer",
+          "description": "Max concurrent requests"
+        },
+        "batch_queue_limit": {
+          "type": "integer",
+          "description": "Max batch queue size"
+        }
+      }
+    },
+    "ModelMetadata": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Model description"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "chat",
+            "completion",
+            "embedding",
+            "rerank",
+            "image-generation",
+            "audio-speech",
+            "audio-transcription",
+            "video-generation",
+            "multimodal",
+            "reasoning",
+            "moderation"
+          ],
+          "description": "Model type"
+        },
+        "family": {
+          "type": "string",
+          "description": "Model family (e.g., gpt-4o, claude-3)"
+        },
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Alternative model IDs"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ga", "preview", "beta", "deprecated", "legacy", "experimental"],
+          "default": "ga",
+          "description": "Model availability status"
+        },
+        "release_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Release date (ISO 8601)"
+        },
+        "deprecation_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Deprecation date (ISO 8601)"
+        },
+        "architecture": {
+          "$ref": "#/definitions/ModelArchitecture"
+        },
+        "context_window": {
+          "$ref": "#/definitions/ContextWindow"
+        },
+        "modalities": {
+          "$ref": "#/definitions/Modalities"
+        },
+        "pricing": {
+          "$ref": "#/definitions/Pricing"
+        },
+        "capabilities": {
+          "$ref": "#/definitions/ModelCapabilities"
+        },
+        "features": {
+          "$ref": "#/definitions/ModelFeatures"
+        },
+        "reasoning": {
+          "$ref": "#/definitions/ReasoningConfig"
+        },
+        "caching": {
+          "$ref": "#/definitions/CachingConfig"
+        },
+        "rate_limits": {
+          "$ref": "#/definitions/RateLimits"
+        },
+        "quantization": {
+          "$ref": "#/definitions/Quantization"
+        }
+      }
+    },
+    "ModelArchitecture": {
+      "type": "object",
+      "properties": {
+        "parameters": {
+          "type": "string",
+          "description": "Parameter count (e.g., '70B', '405B')"
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Architecture type (e.g., 'transformer', 'moe')"
+        },
+        "training_cutoff": {
+          "type": "string",
+          "description": "Training data cutoff date"
+        }
+      }
+    },
+    "ContextWindow": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "integer",
+          "description": "Max input tokens"
+        },
+        "output": {
+          "type": "integer",
+          "description": "Max output tokens"
+        },
+        "total": {
+          "type": "integer",
+          "description": "Total context window (if input+output combined)"
+        }
+      }
+    },
+    "Modalities": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "boolean" },
+            "image": { "type": "boolean" },
+            "audio": { "type": "boolean" },
+            "video": { "type": "boolean" },
+            "file": { "type": "boolean" }
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "boolean" },
+            "image": { "type": "boolean" },
+            "audio": { "type": "boolean" },
+            "video": { "type": "boolean" },
+            "embedding": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "Pricing": {
+      "type": "object",
+      "description": "Pricing in USD per million tokens (unless otherwise specified)",
+      "properties": {
+        "input": {
+          "type": "number",
+          "description": "Input token price per million"
+        },
+        "output": {
+          "type": "number",
+          "description": "Output token price per million"
+        },
+        "cached_input": {
+          "type": "number",
+          "description": "Cached input token price per million"
+        },
+        "cached_output": {
+          "type": "number",
+          "description": "Cached output token price per million"
+        },
+        "reasoning": {
+          "type": "number",
+          "description": "Reasoning token price per million"
+        },
+        "per_request": {
+          "type": "number",
+          "description": "Per-request price"
+        },
+        "per_image": {
+          "type": "number",
+          "description": "Per-image price"
+        },
+        "per_second": {
+          "type": "number",
+          "description": "Per-second price (audio/video)"
+        },
+        "per_search": {
+          "type": "number",
+          "description": "Per-search price"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Billing unit override (e.g., 'characters')"
+        },
+        "tiered": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PricingTier"
+          },
+          "description": "Context-based tiered pricing (e.g., different prices above 200K tokens)"
+        },
+        "modality_pricing": {
+          "$ref": "#/definitions/ModalityPricing"
+        },
+        "batch": {
+          "$ref": "#/definitions/BatchPricing"
+        },
+        "fine_tuning": {
+          "$ref": "#/definitions/FineTuningPricing"
+        },
+        "prompt_caching": {
+          "$ref": "#/definitions/PromptCachingPricing"
+        },
+        "priority": {
+          "$ref": "#/definitions/PriorityPricing"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional pricing notes"
+        }
+      }
+    },
+    "PricingTier": {
+      "type": "object",
+      "required": ["up_to"],
+      "description": "Context-based pricing tier (e.g., different prices above 200K tokens)",
+      "properties": {
+        "up_to": {
+          "oneOf": [
+            { "type": "integer" },
+            { "type": "string", "const": "unlimited" }
+          ],
+          "description": "Token threshold - prices apply up to this limit"
+        },
+        "input": {
+          "type": "number",
+          "description": "Input price per million tokens for this tier"
+        },
+        "output": {
+          "type": "number",
+          "description": "Output price per million tokens for this tier"
+        },
+        "cached_input": {
+          "type": "number",
+          "description": "Cached input price for this tier"
+        },
+        "cached_output": {
+          "type": "number",
+          "description": "Cached output price for this tier"
+        }
+      }
+    },
+    "BatchPricing": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "number",
+          "description": "Batch input price per million"
+        },
+        "output": {
+          "type": "number",
+          "description": "Batch output price per million"
+        },
+        "discount_percent": {
+          "type": "number",
+          "description": "Discount percentage from standard pricing"
+        }
+      }
+    },
+    "ModalityPricing": {
+      "type": "object",
+      "description": "Modality-specific pricing for multimodal models (e.g., OpenAI realtime)",
+      "properties": {
+        "text": {
+          "type": "object",
+          "properties": {
+            "input": { "type": "number" },
+            "output": { "type": "number" },
+            "cached_input": { "type": "number" }
+          }
+        },
+        "audio": {
+          "type": "object",
+          "properties": {
+            "input": { "type": "number" },
+            "output": { "type": "number" },
+            "cached_input": { "type": "number" }
+          }
+        },
+        "image": {
+          "type": "object",
+          "properties": {
+            "input": { "type": "number" },
+            "output": { "type": "number" },
+            "cached_input": { "type": "number" }
+          }
+        },
+        "video": {
+          "type": "object",
+          "properties": {
+            "input": { "type": "number" },
+            "output": { "type": "number" }
+          }
+        }
+      }
+    },
+    "FineTuningPricing": {
+      "type": "object",
+      "description": "Fine-tuning pricing",
+      "properties": {
+        "training": {
+          "type": "number",
+          "description": "Training cost per million tokens"
+        },
+        "input": {
+          "type": "number",
+          "description": "Inference input price after fine-tuning"
+        },
+        "output": {
+          "type": "number",
+          "description": "Inference output price after fine-tuning"
+        },
+        "cached_input": {
+          "type": "number",
+          "description": "Cached input price after fine-tuning"
+        },
+        "per_hour": {
+          "type": "number",
+          "description": "Per-hour training cost (e.g., reinforcement fine-tuning)"
+        }
+      }
+    },
+    "PromptCachingPricing": {
+      "type": "object",
+      "description": "Prompt caching pricing (Anthropic style: write vs read)",
+      "properties": {
+        "write": {
+          "type": "number",
+          "description": "Cost to write to cache per million tokens"
+        },
+        "read": {
+          "type": "number",
+          "description": "Cost to read from cache per million tokens (discounted)"
+        },
+        "ttl_seconds": {
+          "type": "integer",
+          "description": "Cache TTL in seconds"
+        }
+      }
+    },
+    "PriorityPricing": {
+      "type": "object",
+      "description": "Priority tier pricing for guaranteed availability",
+      "properties": {
+        "input": {
+          "type": "number",
+          "description": "Priority tier input price"
+        },
+        "output": {
+          "type": "number",
+          "description": "Priority tier output price"
+        },
+        "multiplier": {
+          "type": "number",
+          "description": "Multiplier over standard pricing (e.g., 1.5)"
+        }
+      }
+    },
+    "ModelCapabilities": {
+      "type": "object",
+      "properties": {
+        "streaming": {
+          "type": "boolean",
+          "description": "Supports streaming responses"
+        },
+        "function_calling": {
+          "type": "boolean",
+          "description": "Supports function/tool calling"
+        },
+        "parallel_tool_calls": {
+          "type": "boolean",
+          "description": "Supports parallel tool calls"
+        },
+        "structured_output": {
+          "type": "boolean",
+          "description": "Supports structured output (JSON schema)"
+        },
+        "json_mode": {
+          "type": "boolean",
+          "description": "Supports JSON mode"
+        },
+        "system_prompt": {
+          "type": "boolean",
+          "description": "Supports system prompts"
+        },
+        "logprobs": {
+          "type": "boolean",
+          "description": "Supports log probabilities"
+        },
+        "seed": {
+          "type": "boolean",
+          "description": "Supports deterministic seed"
+        },
+        "stop_sequences": {
+          "type": "boolean",
+          "description": "Supports stop sequences"
+        },
+        "embeddings": {
+          "type": "boolean",
+          "description": "Is an embedding model"
+        },
+        "dimensions": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "description": "Supported embedding dimensions"
+        }
+      }
+    },
+    "ModelFeatures": {
+      "type": "object",
+      "properties": {
+        "web_search": {
+          "type": "boolean",
+          "description": "Supports web search tool"
+        },
+        "file_search": {
+          "type": "boolean",
+          "description": "Supports file search/RAG"
+        },
+        "code_interpreter": {
+          "type": "boolean",
+          "description": "Supports code interpreter"
+        },
+        "image_generation": {
+          "type": "boolean",
+          "description": "Can generate images"
+        },
+        "computer_use": {
+          "type": "boolean",
+          "description": "Supports computer use/automation"
+        },
+        "mcp": {
+          "type": "boolean",
+          "description": "Supports Model Context Protocol"
+        },
+        "fine_tuning": {
+          "type": "boolean",
+          "description": "Supports fine-tuning"
+        },
+        "distillation": {
+          "type": "boolean",
+          "description": "Supports model distillation"
+        },
+        "predicted_outputs": {
+          "type": "boolean",
+          "description": "Supports predicted outputs"
+        },
+        "prompt_caching": {
+          "type": "boolean",
+          "description": "Supports prompt caching"
+        },
+        "batch_api": {
+          "type": "boolean",
+          "description": "Supports batch API"
+        },
+        "realtime_api": {
+          "type": "boolean",
+          "description": "Supports realtime API"
+        },
+        "assistants_api": {
+          "type": "boolean",
+          "description": "Supports assistants API"
+        }
+      }
+    },
+    "ReasoningConfig": {
+      "type": "object",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Model supports reasoning"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["native", "extended_thinking", "reasoning_effort", "thinking_budget"],
+          "description": "Reasoning implementation type"
+        },
+        "default_enabled": {
+          "type": "boolean",
+          "description": "Reasoning enabled by default"
+        },
+        "budget_tokens": {
+          "type": "object",
+          "properties": {
+            "min": { "type": "integer" },
+            "max": { "type": "integer" },
+            "default": { "type": "integer" }
+          },
+          "description": "Token budget for reasoning"
+        },
+        "effort_levels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Available effort levels (e.g., low, medium, high)"
+        }
+      }
+    },
+    "CachingConfig": {
+      "type": "object",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Model supports caching"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["automatic", "explicit", "ephemeral"],
+          "description": "Caching implementation type"
+        },
+        "min_tokens": {
+          "type": "integer",
+          "description": "Minimum tokens for caching"
+        },
+        "ttl_seconds": {
+          "type": "integer",
+          "description": "Cache TTL in seconds"
+        },
+        "discount_percent": {
+          "type": "number",
+          "description": "Discount percentage for cached tokens"
+        }
+      }
+    },
+    "Quantization": {
+      "type": "object",
+      "properties": {
+        "available": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["fp32", "fp16", "bf16", "int8", "int4", "awq", "gptq", "gguf", "exl2"]
+          },
+          "description": "Available quantization formats"
+        },
+        "default": {
+          "type": "string",
+          "description": "Default quantization"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Quantization notes"
+        }
+      }
+    }
+  }
+}
