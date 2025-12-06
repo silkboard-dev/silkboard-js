@@ -1,0 +1,15 @@
+Silkboard
+Copyright 2025 Silkboard Contributors
+
+This product includes software developed by the Silkboard project
+(https://silkboard.dev).
+
+---
+
+This project builds upon the Vercel AI SDK (https://ai-sdk.dev),
+licensed under the Apache License 2.0.
+
+---
+
+Third-party dependencies are licensed under their respective licenses.
+See package.json for the full list of dependencies.

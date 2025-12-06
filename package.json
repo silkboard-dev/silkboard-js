@@ -41,8 +41,8 @@
     "embeddings",
     "reranking"
   ],
-  "author": "",
-  "license": "MIT",
+  "author": "Manan Ramnani <ramnani.manan@gmail.com>",
+  "license": "Apache-2.0",
   "peerDependencies": {
     "ai": "^6.0.0-beta"
   },
