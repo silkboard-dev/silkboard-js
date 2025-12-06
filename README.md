@@ -33,6 +33,40 @@ A drop-in wrapper for [Vercel AI SDK](https://ai-sdk.dev/) that adds unified rea
 - **Tree-Shakeable** - Subpath exports for minimal bundles
 - **Drop-in Compatible** - Works with existing AI SDK code
 
+## Why a Wrapper, Not a Fork?
+
+Silkboard is a **wrapper** built on top of Vercel AI SDK, not a fork.
+
+| Reason | Benefit |
+|--------|---------|
+| **Independent upgrades** | Update `ai` and `silkboard` separately |
+| **Smaller surface area** | We focus on routing, reasoning, and cost—not HTTP transport |
+| **Trust** | You get Vercel's battle-tested core + our operational layer |
+| **Composable** | Use Silkboard features selectively; drop down to raw AI SDK anytime |
+
+### What This Means For You
+
+```bash
+# You install both packages
+npm install ai silkboard
+```
+
+```typescript
+// Silkboard wraps AI SDK—you can always access the underlying result
+const stream = await silk.streamText({ role: 'answer', messages });
+
+// Or use AI SDK directly when needed
+import { streamText } from 'ai';
+```
+
+### When We Might Fork
+
+We may fork specific provider packages (`@ai-sdk/*`) in the future if:
+- SSE stream handling needs fixes for non-standard providers
+- Polling fallback is required for providers without streaming support
+
+Core `ai` package will remain upstream. Any forks will be clearly documented.
+
 ## Installation
 
 ```bash
